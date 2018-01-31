@@ -2,6 +2,11 @@
 #define MASTERNODEASSIT_H
 
 #include <QMainWindow>
+#include <QStandardItemModel>
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QDebug>
 
 namespace Ui {
 class masternodeassit;
@@ -14,6 +19,13 @@ class masternodeassit : public QMainWindow
 public:
     explicit masternodeassit(QWidget *parent = 0);
     ~masternodeassit();
+    QSqlDatabase database;
+    void initDatabase();
+
+private slots:
+    void on_pb_add_clicked();
+    void getRemoteServers();
+    void addRemoteServers();
 
 private:
     Ui::masternodeassit *ui;

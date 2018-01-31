@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,7 +27,10 @@ SOURCES += \
         main.cpp \
         masternodeassit.cpp \
     mn_libssh2.cpp \
-    mn_puttyscp.cpp
+    mn_puttyscp.cpp \
+    masternodewizard.cpp \
+    configdialog.cpp \
+    pages.cpp
 
 
 
@@ -38,12 +41,18 @@ HEADERS += \
     include/libssh2_publickey.h \
     include/libssh2_sftp.h \
     include/scp.h \
-    mn_puttyscp.h
+    mn_puttyscp.h \
+    masternodewizard.h \
+    configdialog.h \
+    pages.h
 
 FORMS += \
         masternodeassit.ui
 
 
 LIBS += -lWs2_32
+
+RESOURCES += \
+    res.qrc
 
 

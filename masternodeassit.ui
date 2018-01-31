@@ -6,42 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>659</width>
-    <height>342</height>
+    <width>818</width>
+    <height>417</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>masternodeassit</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QListView" name="lv_masternode">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>40</y>
-      <width>241</width>
-      <height>231</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lb_masternodes">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>20</y>
-      <width>111</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>My Masternodes</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="pb_add">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>290</y>
+      <x>550</x>
+      <y>360</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -53,8 +30,8 @@
    <widget class="QPushButton" name="pb_remove">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>290</y>
+      <x>670</x>
+      <y>360</y>
       <width>101</width>
       <height>31</height>
      </rect>
@@ -66,135 +43,20 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>450</x>
       <y>20</y>
       <width>341</width>
-      <height>301</height>
+      <height>321</height>
      </rect>
     </property>
     <property name="title">
      <string>Masternodes</string>
     </property>
-    <widget class="QLabel" name="label">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>30</y>
-       <width>71</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string> 服务器IP</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_2">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>70</y>
-       <width>61</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>服务器端口</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_3">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>100</y>
-       <width>41</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>用户名</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_4">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>130</y>
-       <width>54</width>
-       <height>12</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>用户密码</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_5">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>160</y>
-       <width>51</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>抵押交易</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="le_ip">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>30</y>
-       <width>211</width>
-       <height>20</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="le_port">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>60</y>
-       <width>211</width>
-       <height>20</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="le_user">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>90</y>
-       <width>211</width>
-       <height>20</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="le_pwd">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>120</y>
-       <width>211</width>
-       <height>20</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QTextEdit" name="te_trah">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>150</y>
-       <width>211</width>
-       <height>61</height>
-      </rect>
-     </property>
-    </widget>
     <widget class="QPushButton" name="pb_gen">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>250</y>
+       <x>50</x>
+       <y>280</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -206,8 +68,8 @@
     <widget class="QPushButton" name="pb_upld">
      <property name="geometry">
       <rect>
-       <x>130</x>
-       <y>250</y>
+       <x>140</x>
+       <y>280</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -219,9 +81,9 @@
     <widget class="QPushButton" name="pb_start">
      <property name="geometry">
       <rect>
-       <x>220</x>
-       <y>250</y>
-       <width>91</width>
+       <x>230</x>
+       <y>280</y>
+       <width>81</width>
        <height>23</height>
       </rect>
      </property>
@@ -229,6 +91,100 @@
       <string>start</string>
      </property>
     </widget>
+    <widget class="QWidget" name="gridLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>291</width>
+       <height>231</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>服务器端口</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="le_ip"/>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="le_user"/>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="le_port"/>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="le_pwd"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>用户密码</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>用户名</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>服务器IP</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>主节点私钥</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QTextEdit" name="te_trah">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>80</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>411</width>
+      <height>351</height>
+     </rect>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
