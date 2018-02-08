@@ -26,33 +26,40 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         masternodeassit.cpp \
-    mn_libssh2.cpp \
     mn_puttyscp.cpp \
-    masternodewizard.cpp \
     configdialog.cpp \
-    pages.cpp
+    pages.cpp \
+    uimnmain.cpp \
+    mnwizard.cpp \
+    frametitlebar.cpp \
+    mnlibssh2.cpp \
+    cmasternode.cpp
 
 
 
 HEADERS += \
         masternodeassit.h \
-    mn_libssh2.h \
     include/libssh2.h \
     include/libssh2_publickey.h \
     include/libssh2_sftp.h \
     include/scp.h \
     mn_puttyscp.h \
-    masternodewizard.h \
     configdialog.h \
-    pages.h
+    pages.h \
+    uimnmain.h \
+    mnwizard.h \
+    frametitlebar.h \
+    mnlibssh2.h \
+    cmasternode.h
 
 FORMS += \
-        masternodeassit.ui
+        masternodeassit.ui \
+    uimnmain.ui
 
 
 LIBS += -lWs2_32
 
 RESOURCES += \
-    res.qrc
+    images.qrc
 
 

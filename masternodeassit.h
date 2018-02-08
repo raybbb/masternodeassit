@@ -27,6 +27,8 @@ private slots:
     void getRemoteServers();
     void addRemoteServers();
 
+    void on_pb_remove_clicked();
+
 private:
     Ui::masternodeassit *ui;
 };

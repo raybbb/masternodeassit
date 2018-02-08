@@ -1,0 +1,37 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/config.png</file>
+        <file>images/query.png</file>
+        <file>images/update.png</file>
+        <file>images/bj.png</file>
+        <file>images/gametest.png</file>
+        <file>images/gametest_focus.png</file>
+        <file>images/infoextend.png</file>
+        <file>images/infoextend_focus.png</file>
+        <file>images/logo.png</file>
+        <file>images/positiontest.png</file>
+        <file>images/positiontest_focus.png</file>
+        <file>images/speedtest.png</file>
+        <file>images/speedtest_focus.png</file>
+        <file>images/titleclose.png</file>
+        <file>images/titlemax.png</file>
+        <file>images/titlemenu.png</file>
+        <file>images/titlemini.png</file>
+        <file>images/troublecheck.png</file>
+        <file>images/troublecheck_focus.png</file>
+        <file>images/websitetest.png</file>
+        <file>images/websitetest_focus.png</file>
+        <file>images/wifitest.png</file>
+        <file>images/wifitest_focus.png</file>
+        <file>images/background.png</file>
+        <file>images/logo1.png</file>
+        <file>images/logo2.png</file>
+        <file>images/logo3.png</file>
+        <file>images/watermark1.png</file>
+        <file>images/watermark2.png</file>
+        <file>images/banner.png</file>
+        <file>images/safe_logo.jpg</file>
+        <file>images/safe_logo.png</file>
+        <file>images/s.qss</file>
+    </qresource>
+</RCC>

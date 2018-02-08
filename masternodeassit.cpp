@@ -1,9 +1,9 @@
 #include "masternodeassit.h"
 #include "ui_masternodeassit.h"
-#include "mn_libssh2.h"
+#include "mnlibssh2.h"
 #include "mn_puttyscp.h"
-#include "masternodewizard.h"
 #include "configdialog.h"
+#include "uimnmain.h"
 
 masternodeassit::masternodeassit(QWidget *parent) :
     QMainWindow(parent),
@@ -11,22 +11,6 @@ masternodeassit::masternodeassit(QWidget *parent) :
 {
     ui->setupUi(this);
     initDatabase();
-    /*
-    QStandardItemModel *model = new QStandardItemModel();
-    model->setColumnCount(3);
-    model->setHeaderData(0,Qt::Horizontal,QString::fromLocal8Bit("alias"));
-    model->setHeaderData(1,Qt::Horizontal,QString::fromLocal8Bit("host"));
-    model->setHeaderData(2,Qt::Horizontal,QString::fromLocal8Bit("port"));
-    ui->tv_mn->setModel(model);
-    ui->tv_mn->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-   */
-    /*
-    mn_puttyscp pscp;
-    int rc = pscp.init("45.77.147.225","ray","jinxiaobai3304");
-    qDebug("init return: %d",rc);
-    rc = pscp.scp("c:/b.txt","/home/ray/");
-    qDebug("scp return: %d",rc);
-    */
 
     ui->tableWidget->setColumnCount(7);
     ui->tableWidget->setRowCount(0);
@@ -165,4 +149,10 @@ void masternodeassit::on_pb_add_clicked()
 {
     ConfigDialog dialog;
     dialog.exec();
+}
+
+void masternodeassit::on_pb_remove_clicked()
+{
+    UIMnMain mn;
+    mn.show();
 }
