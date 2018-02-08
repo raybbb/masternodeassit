@@ -33,7 +33,6 @@ private slots:
     void initTableWidget();
     void buttonClick();
 
-
 private slots:
     void on_btnMenu_Min_clicked();
     void on_btnMenu_Max_clicked();

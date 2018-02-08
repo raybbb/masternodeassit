@@ -111,7 +111,7 @@ private:
     QLineEdit *RpcPwdLineEdit;
     QLineEdit *RpcIpLineEdit;
 
-    QCheckBox *RpcCheckBox ;
+    QLabel *RpcLable ;
     QGroupBox *groupBox;
     QRadioButton *qobjectCtorRadioButton;
     QRadioButton *qwidgetCtorRadioButton;
@@ -133,11 +133,14 @@ protected:
 
 private:
     QLabel *protectLable;
+    QLabel *CollateralHashLabel;
+    QLabel *MasternodeKeyLabel;
     QLabel *includeBaseLable;
-    QLabel *macroNameLabel;
-    QLabel *baseIncludeLabel;
-    QLineEdit *macroNameLineEdit;
-    QLineEdit *baseIncludeLineEdit;
+    QLabel *IndexLable;
+
+    QLineEdit *MasternodeKeyLineEdit;
+    QLineEdit *CollateralHashLineEdit;
+    QLineEdit *IndexLineEdit;
 };
 //! [3]
 
@@ -155,9 +158,8 @@ private:
     QLabel *outputDirLabel;
     QLabel *headerLabel;
     QLabel *implementationLabel;
-    QLineEdit *outputDirLineEdit;
-    QLineEdit *headerLineEdit;
-    QLineEdit *implementationLineEdit;
+    QLineEdit *SafeConfLineEdit;
+    QLineEdit *MasternodeConfLineEdit;
     QPushButton *uploadpushButton;
 };
 

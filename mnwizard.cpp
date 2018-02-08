@@ -239,39 +239,52 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo1.png"));
 
 //! [10]
-    HostLabel = new QLabel(tr("&Host:"));
+//!
+    QLabel *MasternodeInfoLable = new QLabel(tr("Fill the Masternode vps infomation."));
+    HostLabel = new QLabel(tr(" &Host Name:"));
     HostLineEdit = new QLineEdit;
+    QRegExp iprx("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\."\
+               "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."\
+               "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."\
+               "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)$");
+
+    HostLineEdit->setValidator(new QRegExpValidator(iprx,this));
     HostLabel->setBuddy(HostLineEdit);
 
-    PortLabel = new QLabel(tr("P&ort:"));
+    PortLabel = new QLabel(tr("&Port:"));
     PortLineEdit = new QLineEdit;
+    PortLineEdit->setValidator(new QIntValidator(0,65536,PortLineEdit));
     PortLabel->setBuddy(PortLineEdit);
 
-    UserLabel = new QLabel(tr("&User:"));
+    UserLabel = new QLabel(tr(" &User Name:"));
     UserLineEdit = new QLineEdit;
     UserLabel->setBuddy(UserLineEdit);
 
-    PwdLabel = new QLabel(tr("P&asswd:"));
+    PwdLabel = new QLabel(tr("Passwd:"));
     PwdLineEdit = new QLineEdit;
+    PwdLineEdit->setEchoMode(QLineEdit::Password);
+    PwdLineEdit->setMaxLength(32);
     PwdLabel->setBuddy(PwdLineEdit);
 
-    RpcUserLabel = new QLabel(tr("R&pc User:"));
+    RpcUserLabel = new QLabel(tr("Rpc User:"));
     RpcUserLineEdit = new QLineEdit;
     RpcUserLabel->setBuddy(RpcUserLineEdit);
 
-    RpcPwdPwdLabel = new QLabel(tr("&Rpc Pwd:"));
+    RpcPwdPwdLabel = new QLabel(tr("Rpc Pwd:"));
     RpcPwdLineEdit = new QLineEdit;
+    RpcPwdLineEdit->setEchoMode(QLineEdit::Password);
+    RpcPwdLineEdit->setMaxLength(32);
     RpcPwdPwdLabel->setBuddy(RpcPwdLineEdit);
 
-    RpcIpLabel = new QLabel(tr("R&pc Ip:"));
+    RpcIpLabel = new QLabel(tr("Rpc Ip:"));
     RpcIpLineEdit = new QLineEdit;
+    RpcIpLineEdit->setValidator(new QRegExpValidator(iprx,this));
     RpcIpLabel->setBuddy(RpcIpLineEdit);
 
-
-    RpcCheckBox = new QCheckBox(tr("Rpc &Configurat"));
+    RpcLable = new QLabel(tr("Rpc Configuration"));
 
 //! [10]
-    groupBox = new QGroupBox(tr("C&onstructor"));
+    groupBox = new QGroupBox(tr("Constructor"));
 //! [9]
     QGridLayout *qh1 = new QGridLayout;
     qh1->addWidget(RpcUserLabel, 0,0);
@@ -285,28 +298,21 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     groupBoxLayout->addLayout(qh1);
 
 //! [11] //! [12]
-    registerField("host*", HostLineEdit);
+    registerField("host", HostLineEdit);
     registerField("port", PortLineEdit);
-    registerField("rpc", RpcCheckBox);
+    registerField("user", UserLineEdit);
+    registerField("pwd", PwdLineEdit);
+    registerField("rpcUser", RpcUserLineEdit);
+    registerField("rpcPwd", RpcPwdLineEdit);
+    registerField("rpcIp", RpcIpLineEdit);
 //! [11]
-    /*
-    registerField("qobjectCtor", qobjectCtorRadioButton);
-    registerField("qwidgetCtor", qwidgetCtorRadioButton);
-    registerField("defaultCtor", defaultCtorRadioButton);
-    registerField("copyCtor", copyCtorCheckBox);
-    */
 
 //! [12]
 //!
-   /* groupBoxLayout->addWidget(qobjectCtorRadioButton);
-    groupBoxLayout->addWidget(qwidgetCtorRadioButton);
-    groupBoxLayout->addWidget(defaultCtorRadioButton);
-    groupBoxLayout->addWidget(copyCtorCheckBox);
-    */
     groupBox->setLayout(groupBoxLayout);
-
     QVBoxLayout *qv = new QVBoxLayout;
 
+    qv->addWidget(MasternodeInfoLable);
     QGridLayout *layout = new QGridLayout;
     layout->addWidget(HostLabel, 0, 0);
     layout->addWidget(HostLineEdit, 0, 1);
@@ -317,7 +323,7 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     layout->addWidget(PwdLabel, 1, 2);
     layout->addWidget(PwdLineEdit, 1, 3);
     QGridLayout *layoutRpc = new QGridLayout;
-    layoutRpc->addWidget(RpcCheckBox, 0, 0, 1, 2);
+    layoutRpc->addWidget(RpcLable, 0, 0, 1, 2);
     layoutRpc->addWidget(groupBox, 1, 0, 1, 2);
 
     qv->addLayout(layout);
@@ -331,48 +337,40 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
 MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     : QWizardPage(parent)
 {
-    setTitle(tr("Code Style Options"));
-    setSubTitle(tr("Choose the formatting of the generated code."));
+    setTitle(tr("MasterNode Attribute"));
+    setSubTitle(tr("Configure the most importance attribute to masternode. Make sure your desktop wallet is running..."));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo2.png"));
 
-    protectLable = new QLabel(tr("Protect header file against multiple "
-                                       "inclusions"));
+    protectLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode genkey\' under Debug console."));
+    MasternodeKeyLabel = new QLabel(tr("&Masternode Key:"));
+    MasternodeKeyLineEdit = new QLineEdit;
+    MasternodeKeyLabel->setBuddy(MasternodeKeyLineEdit);
 
-    macroNameLabel = new QLabel(tr("&Masternode Key:"));
-    macroNameLineEdit = new QLineEdit;
-    macroNameLabel->setBuddy(macroNameLineEdit);
+    includeBaseLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode output\' under Debug console."));
+    CollateralHashLabel = new QLabel(tr("Collateral Hash:"));
+    CollateralHashLineEdit = new QLineEdit;
+    CollateralHashLabel->setBuddy(CollateralHashLineEdit);
+    IndexLable= new QLabel(tr("Collateral Index:"));
+    IndexLineEdit = new QLineEdit;
+    IndexLineEdit->setMaximumWidth(120);
+    IndexLineEdit->setValidator(new QIntValidator(0,10000,IndexLineEdit));
+    IndexLable->setBuddy(IndexLineEdit);
 
-    includeBaseLable = new QLabel(tr("Include base class definition"));
-    baseIncludeLabel = new QLabel(tr("Collateral Hash:"));
-    baseIncludeLineEdit = new QLineEdit;
-    baseIncludeLabel->setBuddy(baseIncludeLineEdit);
-
-    /*
-    connect(protectCheckBox, &QAbstractButton::toggled,
-            macroNameLabel, &QWidget::setEnabled);
-    connect(protectCheckBox, &QAbstractButton::toggled,
-            macroNameLineEdit, &QWidget::setEnabled);
-    connect(includeBaseCheckBox, &QAbstractButton::toggled,
-            baseIncludeLabel, &QWidget::setEnabled);
-    connect(includeBaseCheckBox, &QAbstractButton::toggled,
-      baseIncludeLineEdit, &QWidget::setEnabled);
-      */
-
-    /*
-    registerField("comment", commentCheckBox);
-    registerField("protect", protectCheckBox);
-    registerField("macroName", macroNameLineEdit);
-    registerField("includeBase", includeBaseCheckBox);
-    registerField("baseInclude", baseIncludeLineEdit);
-*/
     QGridLayout *layout = new QGridLayout;
     layout->setColumnMinimumWidth(0, 20);
     layout->addWidget(protectLable, 0, 0, 1, 3);
-    layout->addWidget(macroNameLabel, 1, 1);
-    layout->addWidget(macroNameLineEdit,1, 2);
+    layout->addWidget(MasternodeKeyLabel, 1, 1);
+    layout->addWidget(MasternodeKeyLineEdit,1, 2);
     layout->addWidget(includeBaseLable, 2, 0, 1, 3);
-    layout->addWidget(baseIncludeLabel, 3, 1);
-    layout->addWidget(baseIncludeLineEdit, 3, 2);
+    layout->addWidget(CollateralHashLabel, 3, 1);
+    layout->addWidget(CollateralHashLineEdit, 3, 2);
+    layout->addWidget(IndexLable, 4, 1);
+    layout->addWidget(IndexLineEdit, 4, 2);
+
+    registerField("masternodekey", MasternodeKeyLineEdit);
+    registerField("collateralhash", CollateralHashLineEdit);
+    registerField("collateralindex", IndexLineEdit);
+
 //! [15]
     setLayout(layout);
 }
@@ -381,22 +379,15 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
-    //macroNameLineEdit->setText(className.toUpper() + "_H");
-
+    // use rpc to get info ...
     QString baseClass = field("baseClass").toString();
-
-    //includeBaseCheckBox->setChecked(!baseClass.isEmpty());
-    //includeBaseCheckBox->setEnabled(!baseClass.isEmpty());
-    //baseIncludeLabel->setEnabled(!baseClass.isEmpty());
-    //baseIncludeLineEdit->setEnabled(!baseClass.isEmpty());
-
     QRegularExpression rx("Q[A-Z].*");
     if (baseClass.isEmpty()) {
-        baseIncludeLineEdit->clear();
+        //baseIncludeLineEdit->clear();
     } else if (rx.match(baseClass).hasMatch()) {
-        baseIncludeLineEdit->setText('<' + baseClass + '>');
+        //baseIncludeLineEdit->setText('<' + baseClass + '>');
     } else {
-        baseIncludeLineEdit->setText('"' + baseClass.toLower() + ".h\"");
+        //baseIncludeLineEdit->setText('"' + baseClass.toLower() + ".h\"");
     }
 }
 //! [16]
@@ -404,43 +395,43 @@ void MasternodeInfoPage::initializePage()
 OutputFilesPage::OutputFilesPage(QWidget *parent)
     : QWizardPage(parent)
 {
-    setTitle(tr("Output Files"));
+    setTitle(tr("Output Configure file"));
     setSubTitle(tr("Specify where you want the wizard to put the generated "
-                   "skeleton code."));
+                   "files."));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo3.png"));
 
     outputDirLabel = new QLabel(tr("&safe.conf output directory:"));
-    outputDirLineEdit = new QLineEdit;
-    outputDirLabel->setBuddy(outputDirLineEdit);
+    SafeConfLineEdit = new QLineEdit;
+    outputDirLabel->setBuddy(SafeConfLineEdit);
 
     headerLabel = new QLabel(tr("&masternode.conf output directory:"));
-    headerLineEdit = new QLineEdit;
-    headerLabel->setBuddy(headerLineEdit);
+    MasternodeConfLineEdit = new QLineEdit;
+    headerLabel->setBuddy(MasternodeConfLineEdit);
 
-    registerField("outputDir*", outputDirLineEdit);
-    registerField("header*", headerLineEdit);
+    registerField("safeconf", SafeConfLineEdit);
+    registerField("masternodeconf", MasternodeConfLineEdit);
 
+    /*
     uploadpushButton = new QPushButton;
     uploadpushButton->setText("Upload");
+    */
 
     QGridLayout *layout = new QGridLayout;
     layout->addWidget(outputDirLabel, 0, 0);
-    layout->addWidget(outputDirLineEdit, 1, 0,1,3);
+    layout->addWidget(SafeConfLineEdit, 1, 0,1,3);
     layout->addWidget(headerLabel, 2, 0);
-    layout->addWidget(headerLineEdit, 3, 0,1,3);
+    layout->addWidget(MasternodeConfLineEdit, 3, 0,1,3);
 
-    layout->addWidget(uploadpushButton, 4, 2);
-
-
+    //layout->addWidget(uploadpushButton, 4, 2);
     setLayout(layout);
 }
 
 //! [17]
 void OutputFilesPage::initializePage()
 {
-    QString className = field("className").toString();
-    headerLineEdit->setText(className.toLower() + ".h");
-    outputDirLineEdit->setText(QDir::toNativeSeparators(QDir::tempPath()));
+    QString userName = field("user").toString();
+    SafeConfLineEdit->setText(QString("/home/")+userName+QString("/.safe/safe.conf"));
+    MasternodeConfLineEdit->setText("on windows, read from registry.");
 }
 //! [17]
 
@@ -448,7 +439,7 @@ ConclusionPage::ConclusionPage(QWidget *parent)
     : QWizardPage(parent)
 {
     setTitle(tr("Conclusion"));
-    setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark2.png"));
+    setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark1.png"));
 
     label = new QLabel;
     label->setWordWrap(true);
@@ -462,6 +453,6 @@ void ConclusionPage::initializePage()
 {
     QString finishText = wizard()->buttonText(QWizard::FinishButton);
     finishText.remove('&');
-    label->setText(tr("Click %1 to generate the class skeleton.")
+    label->setText(tr("Click %1 to generate the configuratio files.")
                    .arg(finishText));
 }
