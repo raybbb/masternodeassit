@@ -52,6 +52,7 @@
 #define CLASSWIZARD_H
 
 #include <QWizard>
+#include "cmasternode.h"
 
 QT_BEGIN_NAMESPACE
 class QCheckBox;
@@ -59,16 +60,17 @@ class QGroupBox;
 class QLabel;
 class QLineEdit;
 class QRadioButton;
+class QComboBox;
 QT_END_NAMESPACE
 
 //! [0]
 class MnWizard : public QWizard
 {
     Q_OBJECT
-
+signals:
+    void sigMasternodeAdd(const CMasternode &cmn);
 public:
     MnWizard(QWidget *parent = 0);
-
     void accept() override;
 };
 //! [0]
@@ -86,6 +88,26 @@ private:
 };
 //! [1]
 
+
+//! [1]
+class AddressPage : public QWizardPage
+{
+    Q_OBJECT
+public:
+    AddressPage(QWidget *parent = 0);
+protected:
+    void initializePage() override;
+public Q_SLOTS:
+    void copy();
+private:
+    QLabel *AddressLabel;
+    QLineEdit *AddressLineEdit;
+    QPushButton *copypushButton;
+
+};
+//! [1]
+
+
 //! [2]
 class ServerInfoPage : public QWizardPage
 {
@@ -93,6 +115,8 @@ class ServerInfoPage : public QWizardPage
 
 public:
     ServerInfoPage(QWidget *parent = 0);
+protected:
+    void initializePage() override;
 
 private:
     QLabel *HostLabel;
@@ -139,7 +163,7 @@ private:
     QLabel *IndexLable;
 
     QLineEdit *MasternodeKeyLineEdit;
-    QLineEdit *CollateralHashLineEdit;
+    QComboBox *CollateralHashComboBox;
     QLineEdit *IndexLineEdit;
 };
 //! [3]

@@ -209,28 +209,6 @@ QTimeEdit::down-button:pressed,QDateEdit::down-button:pressed,QDateTimeEdit::dow
 bottom:-2px;
 }
 
-QComboBox::down-arrow,QDateEdit[calendarPopup="true"]::down-arrow,QTimeEdit[calendarPopup="true"]::down-arrow,QDateTimeEdit[calendarPopup="true"]::down-arrow{
-image:url(:/qss/lightgray/add_bottom.png);
-width:10px;
-height:10px;
-right:2px;
-}
-
-QComboBox::drop-down,QDateEdit::drop-down,QTimeEdit::drop-down,QDateTimeEdit::drop-down{
-subcontrol-origin:padding;
-subcontrol-position:top right;
-width:15px;
-border-left-width:0px;
-border-left-style:solid;
-border-top-right-radius:3px;
-border-bottom-right-radius:3px;
-border-left-color:#D4D0C8;
-}
-
-QComboBox::drop-down:on{
-top:1px;
-}
-
 QMenuBar::item{
 color:#6F6F6F;
 background-color:#EEEEEE;

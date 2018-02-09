@@ -50,13 +50,17 @@
 
 #include <QtWidgets>
 #include <QVBoxLayout>
+#include <QDir>
+#include <QClipboard>
 #include "mnwizard.h"
+#include "walletrpc.h"
 
 //! [0] //! [1]
 MnWizard::MnWizard(QWidget *parent)
     : QWizard(parent)
 {
     addPage(new IntroPage);
+    addPage(new AddressPage);
     addPage(new ServerInfoPage);
     addPage(new MasternodeInfoPage);
     addPage(new OutputFilesPage);
@@ -75,133 +79,79 @@ MnWizard::MnWizard(QWidget *parent)
 void MnWizard::accept()
 //! [3] //! [4]
 {
-    QByteArray className = field("className").toByteArray();
-    QByteArray baseClass = field("baseClass").toByteArray();
-    QByteArray macroName = field("macroName").toByteArray();
-    QByteArray baseInclude = field("baseInclude").toByteArray();
+    CMasternode cmn;
 
-    QString outputDir = field("outputDir").toString();
-    QString header = field("header").toString();
-    QString implementation = field("implementation").toString();
-//! [4]
+    QByteArray blocksafeconf;
 
-    QByteArray block;
+    QByteArray host = field("host").toByteArray();
+    QByteArray port = field("port").toByteArray();
+    QByteArray user = field("user").toByteArray();
+    QByteArray pwd = field("pwd").toByteArray();
+    QByteArray rpcuser = field("rpcUser").toByteArray();
+    QByteArray rpcpwd = field("rpcPwd").toByteArray();
+    QByteArray rpcip=  field("rpcIp").toByteArray();
 
-    if (field("comment").toBool()) {
-        block += "/*\n";
-        block += "    " + header.toLatin1() + '\n';
-        block += "*/\n";
-        block += '\n';
-    }
-    if (field("protect").toBool()) {
-        block += "#ifndef " + macroName + '\n';
-        block += "#define " + macroName + '\n';
-        block += '\n';
-    }
-    if (field("includeBase").toBool()) {
-        block += "#include " + baseInclude + '\n';
-        block += '\n';
-    }
+    QByteArray mnkey= field("masternodekey").toByteArray();
+    QByteArray mnclltrlh = field("collateralhash").toByteArray();
+    QByteArray mnclltrlindex = field("collateralindex").toByteArray();
+    QByteArray safeconf = field("safeconf").toByteArray();
+    QByteArray mnconf = field("masternodeconf").toByteArray();
 
-    block += "class " + className;
-    if (!baseClass.isEmpty())
-        block += " : public " + baseClass;
-    block += '\n';
-    block += "{\n";
+    qDebug("hash:") ;
+    qDebug(QString(mnclltrlh).toStdString().c_str());
 
-    /* qmake ignore Q_OBJECT */
+    qDebug(CollateralHashComboBox);
 
-    if (field("qobjectMacro").toBool()) {
-        block += "    Q_OBJECT\n";
-        block += '\n';
-    }
-    block += "public:\n";
 
-    if (field("qobjectCtor").toBool()) {
-        block += "    " + className + "(QObject *parent = 0);\n";
-    } else if (field("qwidgetCtor").toBool()) {
-        block += "    " + className + "(QWidget *parent = 0);\n";
-    } else if (field("defaultCtor").toBool()) {
-        block += "    " + className + "();\n";
-        if (field("copyCtor").toBool()) {
-            block += "    " + className + "(const " + className + " &other);\n";
-            block += '\n';
-            block += "    " + className + " &operator=" + "(const " + className
-                     + " &other);\n";
-        }
-    }
-    block += "};\n";
+    cmn.m_ip = QString(host);
+    cmn.m_port = port.toShort();
+    cmn.m_user = QString(user);
+    cmn.m_pwd = QString(pwd);
+    cmn.m_rpc_user = QString(rpcuser);
+    cmn.m_rpc_pwd = QString(rpcpwd);
+    cmn.m_rpc_ip = QString(rpcip);
 
-    if (field("protect").toBool()) {
-        block += '\n';
-        block += "#endif\n";
+    cmn.m_mn_key = QString(mnkey);
+    cmn.m_clltrl_hash = QString(mnclltrlh);
+    cmn.m_index = mnclltrlindex.toShort();
+    cmn.m_safe_conf_path = QString(safeconf);
+    cmn.m_mn_conf_path = QString(mnconf);
+
+    emit sigMasternodeAdd(cmn);
+
+    blocksafeconf += "rpcuser=" + rpcuser + "\n";
+    blocksafeconf += "rpcpassword=" + rpcpwd + "\n";
+    blocksafeconf += "rpcallowip=" + rpcip + "\n";
+    blocksafeconf += "listen=1\n"\
+                       "server=1\n"\
+                       "daemon=1\n"\
+                       "logtimestamps=1\n"\
+                       "maxconnections=256\n"\
+                       "masternode=1\n";
+
+    blocksafeconf += "masternodeprivkey="+mnkey+"\n";
+    blocksafeconf += "externalip="+host+":"+QString(port)+"\n";
+
+    QDir qDit;
+    if (!qDit.exists("./safeconf"))
+    {
+        qDit.mkdir("./safeconf");
     }
 
-    QFile headerFile(outputDir + '/' + header);
+    QFile headerFile("./safeconf/" + QString(host));
+
     if (!headerFile.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(0, QObject::tr("Simple Wizard"),
+        QMessageBox::warning(0, QObject::tr("Masternode Wizard"),
                              QObject::tr("Cannot write file %1:\n%2")
                              .arg(headerFile.fileName())
                              .arg(headerFile.errorString()));
         return;
     }
-    headerFile.write(block);
 
-    block.clear();
+    headerFile.write(blocksafeconf);
+    blocksafeconf.clear();
+    headerFile.close();
 
-    if (field("comment").toBool()) {
-        block += "/*\n";
-        block += "    " + implementation.toLatin1() + '\n';
-        block += "*/\n";
-        block += '\n';
-    }
-    block += "#include \"" + header.toLatin1() + "\"\n";
-    block += '\n';
-
-    if (field("qobjectCtor").toBool()) {
-        block += className + "::" + className + "(QObject *parent)\n";
-        block += "    : " + baseClass + "(parent)\n";
-        block += "{\n";
-        block += "}\n";
-    } else if (field("qwidgetCtor").toBool()) {
-        block += className + "::" + className + "(QWidget *parent)\n";
-        block += "    : " + baseClass + "(parent)\n";
-        block += "{\n";
-        block += "}\n";
-    } else if (field("defaultCtor").toBool()) {
-        block += className + "::" + className + "()\n";
-        block += "{\n";
-        block += "    // missing code\n";
-        block += "}\n";
-
-        if (field("copyCtor").toBool()) {
-            block += "\n";
-            block += className + "::" + className + "(const " + className
-                     + " &other)\n";
-            block += "{\n";
-            block += "    *this = other;\n";
-            block += "}\n";
-            block += '\n';
-            block += className + " &" + className + "::operator=(const "
-                     + className + " &other)\n";
-            block += "{\n";
-            if (!baseClass.isEmpty())
-                block += "    " + baseClass + "::operator=(other);\n";
-            block += "    // missing code\n";
-            block += "    return *this;\n";
-            block += "}\n";
-        }
-    }
-
-    QFile implementationFile(outputDir + '/' + implementation);
-    if (!implementationFile.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(0, QObject::tr("Simple Wizard"),
-                             QObject::tr("Cannot write file %1:\n%2")
-                             .arg(implementationFile.fileName())
-                             .arg(implementationFile.errorString()));
-        return;
-    }
-    implementationFile.write(block);
 
 //! [5]
     QDialog::accept();
@@ -227,6 +177,44 @@ IntroPage::IntroPage(QWidget *parent)
     setLayout(layout);
 }
 //! [7]
+//!
+AddressPage::AddressPage(QWidget *parent)
+    :QWizardPage(parent)
+{
+    setTitle(tr("Generate Address"));
+    setSubTitle(tr("Gendrate the address from your Desktop wallet, make sure your wallet is opening. "
+                   "Pay the 1000 SAFE to this address."));
+    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
+
+    AddressLabel = new QLabel(tr("collateral transation recive address"));
+    AddressLineEdit = new QLineEdit();
+    AddressLabel->setBuddy(AddressLineEdit);
+    copypushButton = new QPushButton("copy");
+    connect(copypushButton, &QPushButton::clicked, this, &AddressPage::copy);
+
+    QGridLayout *qh1 = new QGridLayout;
+
+    qh1->addWidget(AddressLabel,0,0);
+    qh1->addWidget(AddressLineEdit,1,0,1,4);
+    qh1->addWidget(copypushButton,2,3);
+    setLayout(qh1);
+}
+
+void AddressPage::copy()
+{
+#ifdef _WIN32
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(AddressLineEdit->text());
+#elif
+    //QClipboard *clipboard = QApplication::clipboard();
+    //clipboard->setText();
+#endif
+}
+
+void AddressPage::initializePage()
+{
+    AddressLineEdit->setText("XsxnV2NtwwAfiZLRcY74iccec57YJ6nAqE");
+}
 
 //! [8] //! [9]
 ServerInfoPage::ServerInfoPage(QWidget *parent)
@@ -236,12 +224,12 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     setTitle(tr("Masternodes Information"));
     setSubTitle(tr("Specify basic information about the Masternode for which you "
                    "want to generate configuration files."));
-    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo1.png"));
+    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
 //! [10]
 //!
     QLabel *MasternodeInfoLable = new QLabel(tr("Fill the Masternode vps infomation."));
-    HostLabel = new QLabel(tr(" &Host Name:"));
+    HostLabel = new QLabel(tr(" &Host Ip:"));
     HostLineEdit = new QLineEdit;
     QRegExp iprx("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\."\
                "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."\
@@ -278,7 +266,7 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
 
     RpcIpLabel = new QLabel(tr("Rpc Ip:"));
     RpcIpLineEdit = new QLineEdit;
-    RpcIpLineEdit->setValidator(new QRegExpValidator(iprx,this));
+    //RpcIpLineEdit->setValidator(new QRegExpValidator(iprx,this));
     RpcIpLabel->setBuddy(RpcIpLineEdit);
 
     RpcLable = new QLabel(tr("Rpc Configuration"));
@@ -291,20 +279,20 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     qh1->addWidget(RpcUserLineEdit,0,1);
     qh1->addWidget(RpcPwdPwdLabel,1,0);
     qh1->addWidget(RpcPwdLineEdit,1,1);
-    qh1->addWidget(RpcIpLabel,2,0);
-    qh1->addWidget(RpcIpLineEdit,2,1);
+    //qh1->addWidget(RpcIpLabel,2,0);
+    //qh1->addWidget(RpcIpLineEdit,2,1);
     QVBoxLayout *groupBoxLayout = new QVBoxLayout;
 
     groupBoxLayout->addLayout(qh1);
 
 //! [11] //! [12]
-    registerField("host", HostLineEdit);
-    registerField("port", PortLineEdit);
-    registerField("user", UserLineEdit);
-    registerField("pwd", PwdLineEdit);
-    registerField("rpcUser", RpcUserLineEdit);
-    registerField("rpcPwd", RpcPwdLineEdit);
-    registerField("rpcIp", RpcIpLineEdit);
+    registerField("host*", HostLineEdit);
+    registerField("port*", PortLineEdit);
+    registerField("user*", UserLineEdit);
+    registerField("pwd*", PwdLineEdit);
+    registerField("rpcUser*", RpcUserLineEdit);
+    registerField("rpcPwd*", RpcPwdLineEdit);
+    registerField("rpcIp*", RpcIpLineEdit);
 //! [11]
 
 //! [12]
@@ -334,22 +322,32 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
 //! [13]
 
 
+
+void ServerInfoPage::initializePage()
+{
+    PortLineEdit->setText("5555");
+    RpcUserLineEdit->setText("rpcuser");
+    RpcPwdLineEdit->setText("123456");
+    RpcIpLineEdit->setText("0.0.0.0");
+
+}
+
 MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     : QWizardPage(parent)
 {
     setTitle(tr("MasterNode Attribute"));
     setSubTitle(tr("Configure the most importance attribute to masternode. Make sure your desktop wallet is running..."));
-    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo2.png"));
+    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
     protectLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode genkey\' under Debug console."));
     MasternodeKeyLabel = new QLabel(tr("&Masternode Key:"));
     MasternodeKeyLineEdit = new QLineEdit;
     MasternodeKeyLabel->setBuddy(MasternodeKeyLineEdit);
 
-    includeBaseLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode output\' under Debug console."));
+    includeBaseLable = new QLabel(tr("Get the Collateral Hash use cmd: \'masternode output\' under Debug console."));
     CollateralHashLabel = new QLabel(tr("Collateral Hash:"));
-    CollateralHashLineEdit = new QLineEdit;
-    CollateralHashLabel->setBuddy(CollateralHashLineEdit);
+    CollateralHashComboBox = new QComboBox;
+    CollateralHashLabel->setBuddy(CollateralHashComboBox);
     IndexLable= new QLabel(tr("Collateral Index:"));
     IndexLineEdit = new QLineEdit;
     IndexLineEdit->setMaximumWidth(120);
@@ -363,13 +361,13 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     layout->addWidget(MasternodeKeyLineEdit,1, 2);
     layout->addWidget(includeBaseLable, 2, 0, 1, 3);
     layout->addWidget(CollateralHashLabel, 3, 1);
-    layout->addWidget(CollateralHashLineEdit, 3, 2);
+    layout->addWidget(CollateralHashComboBox, 3, 2);
     layout->addWidget(IndexLable, 4, 1);
     layout->addWidget(IndexLineEdit, 4, 2);
 
-    registerField("masternodekey", MasternodeKeyLineEdit);
-    registerField("collateralhash", CollateralHashLineEdit);
-    registerField("collateralindex", IndexLineEdit);
+    registerField("masternodekey*", MasternodeKeyLineEdit);
+    registerField("collateralhash*", CollateralHashComboBox->lineEdit());
+    registerField("collateralindex*", IndexLineEdit);
 
 //! [15]
     setLayout(layout);
@@ -379,6 +377,15 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
+    WalletRPC walletRpc("127.0.0.1","s","123456");
+    walletRpc.masternodeGenkey();
+
+    CollateralHashComboBox->addItem(tr("hash 1"));
+    CollateralHashComboBox->addItem(tr("hash 2"));
+    CollateralHashComboBox->addItem(tr("hash 3"));
+    CollateralHashComboBox->addItem(tr("hash 4"));
+
+    /*
     // use rpc to get info ...
     QString baseClass = field("baseClass").toString();
     QRegularExpression rx("Q[A-Z].*");
@@ -389,6 +396,7 @@ void MasternodeInfoPage::initializePage()
     } else {
         //baseIncludeLineEdit->setText('"' + baseClass.toLower() + ".h\"");
     }
+    */
 }
 //! [16]
 
@@ -398,7 +406,7 @@ OutputFilesPage::OutputFilesPage(QWidget *parent)
     setTitle(tr("Output Configure file"));
     setSubTitle(tr("Specify where you want the wizard to put the generated "
                    "files."));
-    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/logo3.png"));
+    setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
     outputDirLabel = new QLabel(tr("&safe.conf output directory:"));
     SafeConfLineEdit = new QLineEdit;
@@ -408,8 +416,8 @@ OutputFilesPage::OutputFilesPage(QWidget *parent)
     MasternodeConfLineEdit = new QLineEdit;
     headerLabel->setBuddy(MasternodeConfLineEdit);
 
-    registerField("safeconf", SafeConfLineEdit);
-    registerField("masternodeconf", MasternodeConfLineEdit);
+    registerField("safeconf*", SafeConfLineEdit);
+    registerField("masternodeconf*", MasternodeConfLineEdit);
 
     /*
     uploadpushButton = new QPushButton;
@@ -430,7 +438,15 @@ OutputFilesPage::OutputFilesPage(QWidget *parent)
 void OutputFilesPage::initializePage()
 {
     QString userName = field("user").toString();
-    SafeConfLineEdit->setText(QString("/home/")+userName+QString("/.safe/safe.conf"));
+    if(userName.compare("root",Qt::CaseInsensitive))
+    {
+        SafeConfLineEdit->setText(QString("/home/")+userName+QString("/.safe/safe.conf"));
+    }
+    else
+    {
+        SafeConfLineEdit->setText(QString("/")+userName+QString("/.safe/safe.conf"));
+    }
+
     MasternodeConfLineEdit->setText("on windows, read from registry.");
 }
 //! [17]

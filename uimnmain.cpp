@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QDebug>
 
-#include "mnwizard.h"
+
 QString ARR_MN_FILDNAME[] = {"Num","Alias","Addr","Port","Status"};
 UIMnMain::UIMnMain(QWidget *parent):
     QDialog(parent),
@@ -14,6 +14,11 @@ UIMnMain::UIMnMain(QWidget *parent):
 {
     ui->setupUi(this);
     this->initForm();
+
+    S_MNSTATUS<<QString("UNLOAD")<<QString("LOADED")<<QString("DISABLE")<<QString("ENABLE");
+
+    connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
+    //connect(, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
 
     ui->tableWidget->verticalHeader()->setStyleSheet
             ("QHeaderView::section{background-color:rgba(232,255,213,5);}");
@@ -136,6 +141,8 @@ void UIMnMain::insertTableWidgetItem(CMasternode cmn)
     ui->tableWidget->setItem(nRc-1, 2, itemDeviceAddr);
     ui->tableWidget->setItem(nRc-1, 3, itemContent);
     ui->tableWidget->setItem(nRc-1, 4, itemTime);
+    ui->tableWidget->selectRow(nRc);
+
 }
 
 void UIMnMain::removeTableWidgetItem(CMasternode cmn)
@@ -165,6 +172,14 @@ void UIMnMain::buttonClick()
     }
 }
 
+
+void UIMnMain::recvMnInfo(const CMasternode &cmn)
+{
+    mMasternodes.insert(pair<QString, CMasternode>(cmn.m_ip, cmn));
+    mMasternodes[cmn.m_ip].m_status = S_MNSTATUS[UNLOAD];
+    insertTableWidgetItem(mMasternodes[cmn.m_ip]);
+}
+
 void UIMnMain::on_btnMenu_Min_clicked()
 {
     showMinimized();
@@ -191,10 +206,9 @@ void UIMnMain::on_btnMenu_Close_clicked()
 
 void UIMnMain::on_pb_add_clicked()
 {
-
-    MnWizard mnwizard;
     mnwizard.exec();
-
+    mnwizard.restart();
+/*
     CMasternode mn;
     mn.m_alias = "money";
     mn.m_ip = "127.0.0.1";
@@ -202,6 +216,7 @@ void UIMnMain::on_pb_add_clicked()
     mn.m_status = "well well well";
 
     insertTableWidgetItem(mn);
+    */
 }
 
 
@@ -229,7 +244,7 @@ void UIMnMain::on_tableWidget_clicked(const QModelIndex &index)
         qsHtml.append("</tr>");
     }
     qsHtml.append("</table>");
-    qDebug(qsHtml.toStdString().c_str());
+    //qDebug(qsHtml.toStdString().c_str());
     ui->textEdit->setHtml(qsHtml);
 }
 
@@ -237,7 +252,7 @@ void UIMnMain::on_pb_remove_clicked()
 {
     removeTableWidgetItem(ui->tableWidget->currentRow());
 
-     /*
+    /*
 
     mn_libssh2 ssh2;
     ssh2.mn_init();

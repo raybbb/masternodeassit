@@ -17,6 +17,7 @@ public:
     QString m_rpc_ip;
     QString m_mn_key;
     QString m_clltrl_hash;
+    int m_index;
     QString m_safe_conf_path;
     QString m_mn_conf_path;
     QString m_mn_step;

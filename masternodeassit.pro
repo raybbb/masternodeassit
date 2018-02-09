@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql
+QT       += core gui sql network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -33,7 +33,8 @@ SOURCES += \
     mnwizard.cpp \
     frametitlebar.cpp \
     mnlibssh2.cpp \
-    cmasternode.cpp
+    cmasternode.cpp \
+    walletrpc.cpp
 
 
 
@@ -50,7 +51,8 @@ HEADERS += \
     mnwizard.h \
     frametitlebar.h \
     mnlibssh2.h \
-    cmasternode.h
+    cmasternode.h \
+    walletrpc.h
 
 FORMS += \
         masternodeassit.ui \
