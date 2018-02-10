@@ -67,6 +67,7 @@ UIMnMain::UIMnMain(QWidget *parent):
     }
 
     initTableWidget();
+    initSetting();
 }
 
 void UIMnMain::initSetting()
@@ -74,7 +75,7 @@ void UIMnMain::initSetting()
     //@todo read rpc from /safe.conf
     local_setting.new_safe_conf_files_path = "./safeconf";
     local_setting.script_path = "./script";
-    if(CRegistry::readDataDir(local_setting.safe_conf_path))
+    if(!CRegistry::readDataDir(local_setting.safe_conf_path))
     {
         //@todo safe haven't install. or show dialg to selet path of safe data.
         exit(0);
@@ -85,14 +86,56 @@ void UIMnMain::initSetting()
     QFile file(localSafeConfFile);
     if(file.exists())
     {
-        qDebug()<<"文件已存在";
+
+        int hasConfigRpc = 0;
         if(file.open(QIODevice::ReadWrite))
         {
+            QByteArray safe_conf_line =  file.readLine();
+            while(safe_conf_line.size())
+            {
+                if (safe_conf_line.at(0) == '#')
+                {
+                    safe_conf_line =  file.readLine();
+                    continue;
+                }
 
+                if (safe_conf_line.startsWith("rpcuser"))
+                {
+                    int begin = safe_conf_line.indexOf("=",0);
+                    int end = safe_conf_line.indexOf("\r",0);
+                    if (begin < --end)
+                    {
+                        local_setting.local_rpc_user = safe_conf_line.mid(++begin,--end);
+                        local_setting.local_rpc_user.replace("\r\n", "\0");
+                        hasConfigRpc ++;
+                        qDebug()<< "user: "<<local_setting.local_rpc_user;
+                    }
+                }
+                if (safe_conf_line.startsWith("rpcpassword"))
+                {
+                    int begin = safe_conf_line.indexOf("=",0);
+                    int end = safe_conf_line.indexOf("\r",0);
+                    if (begin < --end)
+                    {
+                        local_setting.local_rpc_pwd = safe_conf_line.mid(++begin,--end);
+                        local_setting.local_rpc_pwd.replace("\r\n", "\0");
+                        hasConfigRpc ++;
+                        qDebug()<< "pwd: "<<local_setting.local_rpc_pwd;
+                    }
+                }
+                safe_conf_line =  file.readLine();
+            }
+            file.close();
         }
-        else
+
+        if(hasConfigRpc != 2)
         {
-           qDebug()<<"打开失败";
+            if(file.open(QIODevice::ReadWrite))
+            {
+                file.write("rpcuser=s\r\n");
+                file.write("rpcpassword=bankledger\r\n");
+                file.close();
+            }
         }
     }
     else

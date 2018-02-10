@@ -57,7 +57,6 @@ private slots:
     void on_tableWidget_itemClicked(QTableWidgetItem *item);
     void on_tableWidget_clicked(const QModelIndex &index);
     void on_pb_remove_clicked();
-    void on_pushButton_2_clicked();
     void on_pb_upload_clicked();
     void on_pb_start_clicked();
 };
