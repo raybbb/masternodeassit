@@ -1,6 +1,8 @@
 #ifndef CLOCALSETTING_H
 #define CLOCALSETTING_H
 #include <QString>
+#include <map>
+using namespace std;
 
 class CLocalSetting
 {
@@ -16,6 +18,8 @@ public:
     QString remote_rpc_pwd;
     QString remote_rpc_ip;
     QString script_path;
+    map<QString, QString> mn_old_info;
+    map<QString, QString> mn_new_info;
 };
 
 

@@ -7,16 +7,6 @@ WalletRPC::WalletRPC(QString hostName, QString rpcUser, QString rpcPassword, QOb
     userInfo2AuthInfo(rpcUser ,rpcPassword);
 }
 
-void WalletRPC::httpFinished()
-{
-    return;
-}
-
-void WalletRPC::httpReadyRead()
-{
-    qDebug() << reply->readAll();
-}
-
 void WalletRPC::userInfo2AuthInfo(QString userName, QString passWord)
 {
     //Authorization = "Basic YW5ndXM6YW5ndXM=";
@@ -29,7 +19,7 @@ void WalletRPC::userInfo2AuthInfo(QString userName, QString passWord)
     //qDebug()<< Authorization;
 }
 
-void WalletRPC::execCmd(QByteArray array)
+QJsonValue WalletRPC::execCmd(QByteArray array)
 {
     QNetworkRequest request(hostUrl);
 
@@ -38,30 +28,118 @@ void WalletRPC::execCmd(QByteArray array)
 
     reply = qnam.post(request,array);
 
-    connect(reply, SIGNAL(finished()), this, SLOT(httpFinished()));
-    connect(reply, SIGNAL(readyRead()), this, SLOT(httpReadyRead()));
-    return;
+    QEventLoop eventLoop;
+    connect(&qnam, SIGNAL(finished(QNetworkReply*)), &eventLoop, SLOT(quit()));
+    eventLoop.exec();       //block until finish
+
+    QByteArray responseData(reply->readAll());
+    qDebug() << responseData;
+
+    return parseResponse(responseData);
 }
 
-void WalletRPC::getinfo()
+QJsonValue WalletRPC::parseResponse(QByteArray &responseData)
+{
+    //qDebug() << responseData;
+    QJsonValue value;
+    QJsonParseError jsonError;
+    QJsonDocument json = QJsonDocument::fromJson(responseData, &jsonError);
+
+    if (jsonError.error == QJsonParseError::NoError)
+    {
+        if (json.isObject())
+        {
+            QJsonObject respObj = json.object();
+
+            if (respObj.contains("result"))
+            {
+                value = respObj.value("result");
+            }
+        }
+    }
+    else
+    {
+        qDebug() << "request rpc error!!";
+    }
+
+    qDebug() << value.toString();
+    return value;
+}
+
+QJsonObject WalletRPC::getinfo()
 {
     qDebug() << "getinfo";
     QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"getinfo\", \"params\": []}");
-    execCmd(array);
+    QJsonValue retData = execCmd(array);
+    QJsonObject subObj;
+    if (retData.isObject())
+    {
+        subObj = retData.toObject();
+        /*
+        if (subObj.contains("blocks"))
+        {
+            QJsonValue value;
+            value = subObj.value("blocks");
+            qDebug() << value.toInt();
+        }
+        */
+    }
+    return subObj;
 }
 
-void WalletRPC::masternodeGenkey()
+QString WalletRPC::masternodeGenkey()
 {
     qDebug() << "masternodeGenkey";
     QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"genkey\"]}");
-    execCmd(array);
+    QJsonValue retData = execCmd(array);
+    return retData.toString();
 }
 
-void WalletRPC::getaccountaddress(QString label)
+QString WalletRPC::getaccountaddress(QString label)
 {
+    qDebug() << "getaccountaddress";
     QString cmdInfo = "{\"jsonrpc\":\"1.0\", \"method\":\"getaccountaddress\", \"params\": [\"" + label + "\"]}";
     QByteArray array(cmdInfo.toUtf8());
-    execCmd(array);
+
+    QJsonValue retData = execCmd(array);
+    return retData.toString();
 }
 
+/*
+void WalletRPC::masternodeStop()
+{
+    qDebug() << "masternodeStop";
+    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"stop\", \"params\": []}");
+    execCmd(array);
+}
+*/
+QJsonObject WalletRPC::masternodeStatus()
+{
+    qDebug() << "masternodeStatus";
+    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"debug\"]}");
+    QJsonValue retData = execCmd(array);
+    QJsonObject subObj;
+
+    if (retData.isObject())
+    {
+        subObj = retData.toObject();
+    }
+
+    return subObj;
+}
+
+QJsonObject WalletRPC::masternodeOutputs()
+{
+    qDebug() << "masternodeStatus";
+    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"debug\"]}");
+    QJsonValue retData = execCmd(array);
+    QJsonObject subObj;
+
+    if (retData.isObject())
+    {
+        subObj = retData.toObject();
+    }
+
+    return subObj;
+}
 

@@ -36,7 +36,8 @@ SOURCES += \
     cmasternode.cpp \
     walletrpc.cpp \
     cregistry.cpp \
-    clocalsetting.cpp
+    clocalsetting.cpp \
+    localrpcdialog.cpp
 
 
 
@@ -56,7 +57,8 @@ HEADERS += \
     cmasternode.h \
     walletrpc.h \
     cregistry.h \
-    clocalsetting.h
+    clocalsetting.h \
+    localrpcdialog.h
 
 FORMS += \
         masternodeassit.ui \

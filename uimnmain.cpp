@@ -3,6 +3,7 @@
 #include "mnlibssh2.h"
 #include "clocalsetting.h"
 #include "cregistry.h"
+#include "localrpcdialog.h"
 
 #include <QDesktopWidget>
 #include <QDateTime>
@@ -80,13 +81,12 @@ void UIMnMain::initSetting()
         //@todo safe haven't install. or show dialg to selet path of safe data.
         exit(0);
     }
-    // find the local rpc user and pwd
+
     QString localSafeConfFile = local_setting.safe_conf_path + "/safe.conf";
     qDebug()<< "*Local safe file: " << localSafeConfFile;
     QFile file(localSafeConfFile);
     if(file.exists())
     {
-
         int hasConfigRpc = 0;
         if(file.open(QIODevice::ReadWrite))
         {
@@ -132,8 +132,16 @@ void UIMnMain::initSetting()
         {
             if(file.open(QIODevice::ReadWrite))
             {
+                /*
                 file.write("rpcuser=s\r\n");
                 file.write("rpcpassword=bankledger\r\n");
+                */
+                // @todo show input diolg to fill rpcuser and password;
+
+                /*ConfigDialog dialog;
+                dialog.exec();*/
+                LocalrpcDialog llrpc;
+                llrpc.exec();
                 file.close();
             }
         }
@@ -143,6 +151,43 @@ void UIMnMain::initSetting()
         qDebug()<<"文件不存在";
     }
 
+    local_setting.masternode_conf_file
+            = local_setting.safe_conf_path + "/masternode.conf";
+    qDebug()<< "*Local masternode confi file: "
+            << local_setting.masternode_conf_file;
+    QFile mnfile(local_setting.masternode_conf_file);
+    if(mnfile.exists())
+    {
+        if(mnfile.open(QIODevice::ReadWrite))
+        {
+            while(true)
+            {
+                QByteArray mn_conf_line =  mnfile.readLine();
+                if(mn_conf_line.size()>0)
+                {
+                    QList<QByteArray> qList = mn_conf_line.split(' ');
+                    if(qList.size() > 4)
+                    {
+                        qDebug()<< "3:"<<qList[3];
+                        qDebug()<< "4:"<<qList[4];
+                        local_setting.mn_old_info[qList[3]] = qList[4];
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            qDebug()<<"open failed!";
+        }
+    }
+    else
+    {
+        qDebug()<<"文件不存在";
+    }
 
 }
 
@@ -286,6 +331,13 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     insertTableWidgetItem(mMasternodes[cmn.m_ip]);
     show_masternode(cmn);
     current_ip = cmn.m_ip;
+
+    local_setting.remote_rpc_ip = cmn.m_remote_rpc_ip;
+    local_setting.remote_rpc_user = cmn.m_remote_rpc_user;
+    local_setting.remote_rpc_pwd = cmn.m_remote_rpc_pwd;
+    local_setting.safe_conf_file = cmn.m_safe_conf_path;
+    local_setting.masternode_conf_path = cmn.m_mn_conf_path;
+
 }
 
 void UIMnMain::show_masternode(const CMasternode &cmn)
@@ -369,11 +421,16 @@ void UIMnMain::on_tableWidget_clicked(const QModelIndex &index)
         qsHtml.append("</tr>");
     }
     qsHtml.append("</table>");
-
     ui->textEdit->setHtml(qsHtml);
-
     current_ip = ui->tableWidget->item(iRow, 2)->data(Qt::DisplayRole).toString();
+
     //@todo read data from database or map
+    CMasternode cmn = mMasternodes[current_ip];
+    local_setting.remote_rpc_ip = cmn.m_remote_rpc_ip;
+    local_setting.remote_rpc_user = cmn.m_remote_rpc_user;
+    local_setting.remote_rpc_pwd = cmn.m_remote_rpc_pwd;
+    local_setting.safe_conf_file = cmn.m_safe_conf_path;
+    local_setting.masternode_conf_path = cmn.m_mn_conf_path;
 }
 
 void UIMnMain::on_pb_remove_clicked()

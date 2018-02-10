@@ -53,6 +53,8 @@
 
 #include <QWizard>
 #include "cmasternode.h"
+#include "walletrpc.h"
+#include "clocalsetting.h"
 
 QT_BEGIN_NAMESPACE
 class QCheckBox;
@@ -109,8 +111,6 @@ private:
     QLabel *AddressLabel;
     QLineEdit *AddressLineEdit;
     QPushButton *copypushButton;
-
-
 };
 //! [1]
 

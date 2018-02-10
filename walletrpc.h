@@ -12,13 +12,15 @@ class WalletRPC : public QObject
 public:
     WalletRPC(QString hostName, QString rpcUser, QString rpcPassword, QObject *parent = 0);
 
-    void getinfo();
-    void masternodeGenkey();
-    void getaccountaddress(QString label);
+    QJsonObject getinfo();
+    QString masternodeGenkey();
+    QString getaccountaddress(QString label);
+    //void masternodeStop();
+    QJsonObject masternodeStatus();
+    QJsonObject masternodeOutputs();
 
 public slots:
-    void httpFinished();
-    void httpReadyRead();
+    QJsonValue parseResponse(QByteArray &responseData);
 
 private:
     QUrl hostUrl;
@@ -26,7 +28,7 @@ private:
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
     void userInfo2AuthInfo(QString userName, QString passWord);
-    void execCmd(QByteArray array);
+    QJsonValue execCmd(QByteArray array);
 };
 
 #endif // WALLETRPC_H

@@ -72,7 +72,12 @@ MnWizard::MnWizard(QWidget *parent)
     setPixmap(QWizard::BannerPixmap, QPixmap(":/images/banner.png"));
     setPixmap(QWizard::BackgroundPixmap, QPixmap(":/images/background.png"));
 
-    setWindowTitle(tr("Masternode Wizard"));
+    setWindowTitle(tr("Masternode 配置向导"));
+
+    this->setButtonText(WizardButton::BackButton, "上一步");
+    this->setButtonText(WizardButton::NextButton, "下一步");
+    this->setButtonText(WizardButton::FinishButton,"完 成");
+    this->setButtonText(WizardButton::CancelButton,"取 消");
 //! [2]
 }
 //! [1] //! [2]
@@ -199,13 +204,13 @@ void MnWizard::accept()
 IntroPage::IntroPage(QWidget *parent)
     : QWizardPage(parent)
 {
-    setTitle(tr("Introduction"));
+    setTitle(tr("介绍"));
     setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark1.png"));
 
-    label = new QLabel(tr("This wizard will generate a Masternode configuration "
-                          "file, including safe.conf and masternode.conf. "
-                          "You simply need to specify  set a few options "
-                          "to produce implementation file for your new masternode."));
+    label = new QLabel(tr("这个向导帮助用户配置Masternode的配置文件，会生成safe.conf和"
+                          "masternode.conf。并帮助用户将文件放到合适的位置。免去繁琐的Linux"
+                          "操作和配置文件编辑，用户只需要打开桌面钱包，输入正确的VPS服务器地址和"
+                          "用户信息，把1000个safe打到指定地址。就可以完成Masternode的搭建。"));
     label->setWordWrap(true);
 
     QVBoxLayout *layout = new QVBoxLayout;
@@ -217,47 +222,60 @@ IntroPage::IntroPage(QWidget *parent)
 AddressPage::AddressPage(QWidget *parent)
     :QWizardPage(parent)
 {
-    setTitle(tr("Generate Address"));
-    setSubTitle(tr("Gendrate the address from your Desktop wallet, make sure your wallet is opening. "
-                   "Pay the 1000 SAFE to this address."));
+    setTitle(tr("生成抵押SAFE的地址"));
+    setSubTitle(tr("从钱包中生成地址,确保你的钱包处于运行状态。"
+                   "将1000 SAFE 发送到这个地址."));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
-    GenAddressLabel = new QLabel(tr("Set the masternote alias.(Ex: mn1)"));
-    AlliasLabel = new QLabel(tr("alias:"));
+    GenAddressLabel = new QLabel(tr("设置masternote的别名(例如: mn1)"));
+    AlliasLabel = new QLabel(tr("Masternode 别名:"));
     GenAddressLineEdit = new QLineEdit();
     AlliasLabel->setBuddy(GenAddressLineEdit);
-    GencopypushButton = new QPushButton("Generate Address");
+    GencopypushButton = new QPushButton("生成地址");
     connect(GencopypushButton, &QPushButton::clicked,
             this, &AddressPage::generateAddr);
 
-    AddressLabel = new QLabel(tr("Collateral transation recive address."));
+    //@todo 已经打过1000个safe,中断操作后，怎么继续？
+    AddressLabel = new QLabel(tr("SAFE接收地址，先将1000个SAFE打到这个地址"));
+    QLabel *aLabel  = new QLabel(tr("（如有可用的抵押交易，可跳过汇款）"));
     AddressLineEdit = new QLineEdit();
+    AddressLineEdit->setEnabled(false);
     AddressLabel->setBuddy(AddressLineEdit);
-    copypushButton = new QPushButton("copy");
+    copypushButton = new QPushButton("拷贝");
     connect(copypushButton, &QPushButton::clicked, this, &AddressPage::copy);
 
-
-    registerField("mnalias*", GenAddressLineEdit);
-    registerField("address*", AddressLineEdit);
+    registerField("mnalias", GenAddressLineEdit);
+    registerField("address", AddressLineEdit);
 
     QGridLayout *qh1 = new QGridLayout;
     qh1->addWidget(GenAddressLabel,0,0);
     qh1->addWidget(GenAddressLineEdit,1,0,1,4);
     qh1->addWidget(GencopypushButton,1,4);
     qh1->addWidget(AddressLabel,2,0);
-    qh1->addWidget(AddressLineEdit,3,0,1,5);
-    qh1->addWidget(copypushButton,4,4);
+    qh1->addWidget(aLabel,3,0);
+    qh1->addWidget(AddressLineEdit,4,0,1,5);
+    qh1->addWidget(copypushButton,5,4);
     setLayout(qh1);
 }
 
 void AddressPage::generateAddr()
 {
-    //@ call rpc to get address
     if(GenAddressLineEdit->text() == "")
     {
         return;
     }
-    AddressLineEdit->setText("XsxnV2NtwwAfiZLRcY74iccec57YJ6nAqE");
+    WalletRPC wallet("127.0.0.1",
+                     local_setting.local_rpc_user,
+                     local_setting.local_rpc_pwd);
+    QString qsAdress = wallet.getaccountaddress(GenAddressLineEdit->text());
+    if(qsAdress != "")
+    {
+        AddressLineEdit->setText(qsAdress);
+    }
+    else
+    {
+        // @todo somethings;
+    }
 }
 
 void AddressPage::copy()
@@ -281,15 +299,15 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     : QWizardPage(parent)
 {
 //! [8]
-    setTitle(tr("Masternodes Information"));
-    setSubTitle(tr("Specify basic information about the Masternode for which you "
-                   "want to generate configuration files."));
+    setTitle(tr("Masternodes 服务端配置"));
+    setSubTitle(tr("填写基本的Masternode信息，并确保VPS是开启状态，"
+                   "填写的用户能够正常登陆。和有相应的权限，程序会帮助你生成配置文件。"));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
 //! [10]
 //!
-    QLabel *MasternodeInfoLable = new QLabel(tr("Fill the Masternode vps infomation."));
-    HostLabel = new QLabel(tr(" &Host Ip:"));
+    QLabel *MasternodeInfoLable = new QLabel(tr("填写远程服务器的基本信息"));
+    HostLabel = new QLabel(tr(" &主机 IP:"));
     HostLineEdit = new QLineEdit;
     QRegExp iprx("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\."\
                "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."\
@@ -299,37 +317,37 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
     HostLineEdit->setValidator(new QRegExpValidator(iprx,this));
     HostLabel->setBuddy(HostLineEdit);
 
-    PortLabel = new QLabel(tr("&Port:"));
+    PortLabel = new QLabel(tr("主机端口:"));
     PortLineEdit = new QLineEdit;
     PortLineEdit->setValidator(new QIntValidator(0,65536,PortLineEdit));
     PortLabel->setBuddy(PortLineEdit);
 
-    UserLabel = new QLabel(tr(" &User Name:"));
+    UserLabel = new QLabel(tr(" &登陆用户名:"));
     UserLineEdit = new QLineEdit;
     UserLabel->setBuddy(UserLineEdit);
 
-    PwdLabel = new QLabel(tr("Passwd:"));
+    PwdLabel = new QLabel(tr("登陆用户的密码:"));
     PwdLineEdit = new QLineEdit;
     PwdLineEdit->setEchoMode(QLineEdit::Password);
     PwdLineEdit->setMaxLength(32);
     PwdLabel->setBuddy(PwdLineEdit);
 
-    RpcUserLabel = new QLabel(tr("Rpc User:"));
+    RpcUserLabel = new QLabel(tr("远程RPC用户名:"));
     RpcUserLineEdit = new QLineEdit;
     RpcUserLabel->setBuddy(RpcUserLineEdit);
 
-    RpcPwdPwdLabel = new QLabel(tr("Rpc Pwd:"));
+    RpcPwdPwdLabel = new QLabel(tr("远程RPC密码:"));
     RpcPwdLineEdit = new QLineEdit;
     RpcPwdLineEdit->setEchoMode(QLineEdit::Password);
     RpcPwdLineEdit->setMaxLength(32);
     RpcPwdPwdLabel->setBuddy(RpcPwdLineEdit);
 
-    RpcIpLabel = new QLabel(tr("Rpc Ip:"));
+    RpcIpLabel = new QLabel(tr("远程RPCIP:"));
     RpcIpLineEdit = new QLineEdit;
     //RpcIpLineEdit->setValidator(new QRegExpValidator(iprx,this));
     RpcIpLabel->setBuddy(RpcIpLineEdit);
 
-    RpcLable = new QLabel(tr("Rpc Configuration"));
+    RpcLable = new QLabel(tr("远程RPC配置"));
 
 //! [10]
     groupBox = new QGroupBox(tr("Constructor"));
@@ -389,7 +407,7 @@ void ServerInfoPage::initializePage()
     PortLineEdit->setText("5555");
     RpcUserLineEdit->setText("rpcuser");
     RpcPwdLineEdit->setText("123456");
-    RpcIpLineEdit->setText("0.0.0.0");
+    RpcIpLineEdit->setText("0.0.0.0/0");
     UserLineEdit->setText("rbai");
     PwdLineEdit->setText("`1q`1q`1q");
 
@@ -398,21 +416,24 @@ void ServerInfoPage::initializePage()
 MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     : QWizardPage(parent)
 {
-    setTitle(tr("MasterNode Attribute"));
-    setSubTitle(tr("Configure the most importance attribute to masternode. Make sure your desktop wallet is running..."));
+    setTitle(tr("MasterNode 属性"));
+    setSubTitle(tr("配置关于Masternode的一些关键参数，这些由程序自动执行，"
+                   "但必须确保桌面钱包处于运行状态。"));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
-    protectLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode genkey\' under Debug console."));
-    MasternodeKeyLabel = new QLabel(tr("&Masternode Key:"));
+    //protectLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode genkey\' under Debug console."));
+    protectLable = new QLabel(tr("生成Masternode 秘钥（没有花费能力，不会影响1000个SAFE的使用）."));
+    MasternodeKeyLabel = new QLabel(tr("&Masternode秘钥:"));
     MasternodeKeyLineEdit = new QLineEdit;
     MasternodeKeyLabel->setBuddy(MasternodeKeyLineEdit);
 
-    includeBaseLable = new QLabel(tr("Get the Collateral Hash use cmd: \'masternode output\' under Debug console."));
-    CollateralHashLabel = new QLabel(tr("Collateral Hash:"));
+    //includeBaseLable = new QLabel(tr("Get the Collateral Hash use cmd: \'masternode output\' under Debug console."));
+    includeBaseLable = new QLabel(tr("获取1000个SAFE抵押的交易哈希"));
+    CollateralHashLabel = new QLabel(tr("抵押交易哈希:"));
     CollateralHashComboBox = new QComboBox;
     CollateralHashLineEdit = new QLineEdit;
     CollateralHashLabel->setBuddy(CollateralHashLineEdit);
-    IndexLable= new QLabel(tr("Collateral Index:"));
+    IndexLable= new QLabel(tr("抵押交易哈希的索引:"));
     IndexLineEdit = new QLineEdit;
     IndexLineEdit->setMaximumWidth(120);
     IndexLineEdit->setValidator(new QIntValidator(0,10000,IndexLineEdit));
@@ -420,8 +441,11 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 
     connect(CollateralHashComboBox,
             &QComboBox::currentTextChanged,CollateralHashLineEdit,
-            [=](){CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
-                    qDebug()<<"hash:"<<CollateralHashComboBox->currentText();});
+            [=](){
+        CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
+        IndexLineEdit->setText("1");
+        qDebug()<<"hash:"<<CollateralHashComboBox->currentText();
+    });
 
     QGridLayout *layout = new QGridLayout;
     layout->setColumnMinimumWidth(0, 20);
@@ -446,44 +470,62 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
-    //WalletRPC walletRpc("127.0.0.1","s","123456");
-    //walletRpc.masternodeGenkey();
+    WalletRPC walletRpc("127.0.0.1",
+                        local_setting.local_rpc_user,
+                        local_setting.local_rpc_pwd);
 
-    CollateralHashComboBox->addItem(tr("hash 1"));
-    CollateralHashComboBox->addItem(tr("hash 2"));
+    QString qsGenKey = walletRpc.masternodeGenkey();
+    if (qsGenKey != "")
+    {
+        MasternodeKeyLineEdit->setText(qsGenKey);
+    }
+    else
+    {
+        // @todo something;
+    }
+
+    QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
+    foreach (auto key, qjsonOutput) {
+        qDebug()<<"key:"<<key.toString();
+        qDebug()<<"value:"<<qjsonOutput.value(key.toString()).toString();
+        if (local_setting.mn_old_info.find(key.toString())
+                !=local_setting.mn_old_info.end())
+        {
+            qDebug()<<"old key:"<<key.toString();
+        }
+        else
+        {
+            qDebug()<<"new key:"<<key.toString();
+            CollateralHashComboBox->addItem(key.toString());
+        }
+        local_setting.mn_new_info[key.toString()]
+                = qjsonOutput.value(key.toString()).toString();
+    }
+
+    CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
+
+    /*CollateralHashComboBox->addItem(tr("hash 2"));
     CollateralHashComboBox->addItem(tr("hash 3"));
     CollateralHashComboBox->addItem(tr("hash 4"));
     qDebug()<<"hash:"<<CollateralHashComboBox->currentText();
     CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
-
-    /*
-    // use rpc to get info ...
-    QString baseClass = field("baseClass").toString();
-    QRegularExpression rx("Q[A-Z].*");
-    if (baseClass.isEmpty()) {
-        //baseIncludeLineEdit->clear();
-    } else if (rx.match(baseClass).hasMatch()) {
-        //baseIncludeLineEdit->setText('<' + baseClass + '>');
-    } else {
-        //baseIncludeLineEdit->setText('"' + baseClass.toLower() + ".h\"");
-    }
     */
+
 }
 //! [16]
 
 OutputFilesPage::OutputFilesPage(QWidget *parent)
     : QWizardPage(parent)
 {
-    setTitle(tr("Output Configure file"));
-    setSubTitle(tr("Specify where you want the wizard to put the generated "
-                   "files."));
+    setTitle(tr("配置文件的输出路径"));
+    setSubTitle(tr("这是配置文件将要输出的路径，如果手动修改，后续的工作将无法完成."));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
-    outputDirLabel = new QLabel(tr("&safe.conf output directory:"));
+    outputDirLabel = new QLabel(tr("safe.conf的输出路径:"));
     SafeConfLineEdit = new QLineEdit;
     outputDirLabel->setBuddy(SafeConfLineEdit);
 
-    headerLabel = new QLabel(tr("&masternode.conf output directory:"));
+    headerLabel = new QLabel(tr("masternode.conf的输出路径:"));
     MasternodeConfLineEdit = new QLineEdit;
     headerLabel->setBuddy(MasternodeConfLineEdit);
 
@@ -511,11 +553,11 @@ void OutputFilesPage::initializePage()
     QString userName = field("user").toString();
     if(userName.compare("root",Qt::CaseInsensitive))
     {
-        SafeConfLineEdit->setText(QString("/home/")+userName+QString("/.safe/safe.conf"));
+        SafeConfLineEdit->setText(QString("/home/")+userName+QString("/safe.conf"));
     }
     else
     {
-        SafeConfLineEdit->setText(QString("/")+userName+QString("/.safe/safe.conf"));
+        SafeConfLineEdit->setText(QString("/")+userName+QString("/safe.conf"));
     }
 
     QString qMnconf = "";
@@ -528,15 +570,13 @@ void OutputFilesPage::initializePage()
     {
         // show file dialog user chonse
     }
-
-
 }
 //! [17]
 
 ConclusionPage::ConclusionPage(QWidget *parent)
     : QWizardPage(parent)
 {
-    setTitle(tr("Conclusion"));
+    setTitle(tr("结 束"));
     setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark1.png"));
 
     label = new QLabel;
@@ -551,6 +591,6 @@ void ConclusionPage::initializePage()
 {
     QString finishText = wizard()->buttonText(QWizard::FinishButton);
     finishText.remove('&');
-    label->setText(tr("Click %1 to generate the configuratio files.")
+    label->setText(tr("点击 “%1” 生成配置文件.")
                    .arg(finishText));
 }
