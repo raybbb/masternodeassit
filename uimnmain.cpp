@@ -1,13 +1,41 @@
 ﻿#include "uimnmain.h"
 #include "ui_uimnmain.h"
 #include "mnlibssh2.h"
+#include "clocalsetting.h"
+#include "cregistry.h"
+
 #include <QDesktopWidget>
 #include <QDateTime>
 #include <QFile>
 #include <QDebug>
 
+#include <QEvent>
+#include <QMouseEvent>
+#include <QApplication>
+
+#ifdef Q_OS_WIN
+#pragma comment(lib, "user32.lib")
+#include <qt_windows.h>
+#endif
 
 QString ARR_MN_FILDNAME[] = {"Num","Alias","Addr","Port","Status"};
+
+void UIMnMain::mousePressEvent(QMouseEvent *event)
+{
+#ifdef Q_OS_WIN
+    if (ReleaseCapture())
+    {
+        QWidget *pWindow = this->window();
+        if (pWindow->isTopLevel())
+        {
+           SendMessage(HWND(pWindow->winId()), WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
+        }
+    }
+    event->ignore();
+    #else
+    #endif
+}
+
 UIMnMain::UIMnMain(QWidget *parent):
     QDialog(parent),
     ui(new Ui::UIMnMain)
@@ -39,6 +67,40 @@ UIMnMain::UIMnMain(QWidget *parent):
     }
 
     initTableWidget();
+}
+
+void UIMnMain::initSetting()
+{
+    //@todo read rpc from /safe.conf
+    local_setting.new_safe_conf_files_path = "./safeconf";
+    local_setting.script_path = "./script";
+    if(CRegistry::readDataDir(local_setting.safe_conf_path))
+    {
+        //@todo safe haven't install. or show dialg to selet path of safe data.
+        exit(0);
+    }
+    // find the local rpc user and pwd
+    QString localSafeConfFile = local_setting.safe_conf_path + "/safe.conf";
+    qDebug()<< "*Local safe file: " << localSafeConfFile;
+    QFile file(localSafeConfFile);
+    if(file.exists())
+    {
+        qDebug()<<"文件已存在";
+        if(file.open(QIODevice::ReadWrite))
+        {
+
+        }
+        else
+        {
+           qDebug()<<"打开失败";
+        }
+    }
+    else
+    {
+        qDebug()<<"文件不存在";
+    }
+
+
 }
 
 UIMnMain::~UIMnMain()
@@ -105,6 +167,7 @@ void UIMnMain::initForm()
     this->setProperty("form", true);
     this->setProperty("canMove", true);
     this->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
+    //ui->widgetTitle->setVisible(false);
 
     ui->labTitle->setText("Masternode管理平台");
     this->setWindowTitle("Masternode管理平台");
@@ -178,6 +241,34 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     mMasternodes.insert(pair<QString, CMasternode>(cmn.m_ip, cmn));
     mMasternodes[cmn.m_ip].m_status = S_MNSTATUS[UNLOAD];
     insertTableWidgetItem(mMasternodes[cmn.m_ip]);
+    show_masternode(cmn);
+    current_ip = cmn.m_ip;
+}
+
+void UIMnMain::show_masternode(const CMasternode &cmn)
+{
+    QString qsHtml = "<th>Masternoede Info</th>";
+    qsHtml.append("<hr>");
+    qsHtml.append("<table border='0.1' width='100%'>");
+
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("alias");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(cmn.m_alias);
+    qsHtml.append("</td>");qsHtml.append("</tr>");
+
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("vps ip");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(cmn.m_ip);
+    qsHtml.append("</td>");qsHtml.append("</tr>");
+
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("status");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append("UNLOAD");
+    qsHtml.append("</td>");qsHtml.append("</tr>");
+
+    qsHtml.append("</table>");
+    //qDebug(qsHtml.toStdString().c_str());
+    ui->textEdit->setHtml(qsHtml);
 }
 
 void UIMnMain::on_btnMenu_Min_clicked()
@@ -208,15 +299,6 @@ void UIMnMain::on_pb_add_clicked()
 {
     mnwizard.exec();
     mnwizard.restart();
-/*
-    CMasternode mn;
-    mn.m_alias = "money";
-    mn.m_ip = "127.0.0.1";
-    mn.m_port = 110;
-    mn.m_status = "well well well";
-
-    insertTableWidgetItem(mn);
-    */
 }
 
 
@@ -244,8 +326,11 @@ void UIMnMain::on_tableWidget_clicked(const QModelIndex &index)
         qsHtml.append("</tr>");
     }
     qsHtml.append("</table>");
-    //qDebug(qsHtml.toStdString().c_str());
+
     ui->textEdit->setHtml(qsHtml);
+
+    current_ip = ui->tableWidget->item(iRow, 2)->data(Qt::DisplayRole).toString();
+    //@todo read data from database or map
 }
 
 void UIMnMain::on_pb_remove_clicked()
@@ -253,7 +338,6 @@ void UIMnMain::on_pb_remove_clicked()
     removeTableWidgetItem(ui->tableWidget->currentRow());
 
     /*
-
     mn_libssh2 ssh2;
     ssh2.mn_init();
     ssh2.mn_login("45.77.147.225","ray","jinxiaobai3304");
@@ -276,4 +360,67 @@ void UIMnMain::on_pb_remove_clicked()
         qDebug("Copy Error ...");
     }
     */
+}
+
+void UIMnMain::on_pb_upload_clicked()
+{
+     if (current_ip != "")
+     {
+         mn_libssh2 ssh2;
+         ssh2.mn_init();
+
+         CMasternode cmd = mMasternodes[current_ip];
+         int nRc = ssh2.mn_login(cmd.m_ip.toStdString().c_str(),
+                       cmd.m_user.toStdString().c_str(),
+                       cmd.m_pwd.toStdString().c_str());
+         if (!nRc)
+         {
+             nRc = ssh2.mn_scp_write(cmd.m_safe_conf_path.toStdString().c_str(),
+                               (QString("./safeconf/")+current_ip).toStdString().c_str());
+             if (!nRc)
+             {
+                 qDebug("upload the file success.");
+             }
+             else
+             {
+                 qDebug("upload the file failed.");
+             }
+         }
+     }
+     else
+     {
+         qDebug("nothing to upload .");
+     }
+}
+
+void UIMnMain::on_pb_start_clicked()
+{
+    if (current_ip != "")
+    {
+        mn_libssh2 ssh2;
+        ssh2.mn_init();
+
+        CMasternode cmd = mMasternodes[current_ip];
+        int nRc = ssh2.mn_login(cmd.m_ip.toStdString().c_str(),
+                      cmd.m_user.toStdString().c_str(),
+                      cmd.m_pwd.toStdString().c_str());
+        if (!nRc)
+        {
+            nRc = ssh2.mn_scp_write("/home/rbai/start_test.py",
+                              (QString("./script/")+"start_test.py").toStdString().c_str());
+            if (!nRc)
+            {
+                qDebug("upload the file success.");
+                ssh2.mn_exec("python /home/rbai/start_test.py");
+            }
+            else
+            {
+                qDebug("upload the file failed.");
+            }
+        }
+    }
+    else
+    {
+        qDebug("nothing to upload .");
+    }
 }

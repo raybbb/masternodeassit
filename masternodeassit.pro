@@ -34,7 +34,9 @@ SOURCES += \
     frametitlebar.cpp \
     mnlibssh2.cpp \
     cmasternode.cpp \
-    walletrpc.cpp
+    walletrpc.cpp \
+    cregistry.cpp \
+    clocalsetting.cpp
 
 
 
@@ -52,7 +54,9 @@ HEADERS += \
     frametitlebar.h \
     mnlibssh2.h \
     cmasternode.h \
-    walletrpc.h
+    walletrpc.h \
+    cregistry.h \
+    clocalsetting.h
 
 FORMS += \
         masternodeassit.ui \

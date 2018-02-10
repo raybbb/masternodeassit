@@ -54,6 +54,7 @@
 #include <QClipboard>
 #include "mnwizard.h"
 #include "walletrpc.h"
+#include "cregistry.h"
 
 //! [0] //! [1]
 MnWizard::MnWizard(QWidget *parent)
@@ -67,6 +68,7 @@ MnWizard::MnWizard(QWidget *parent)
     addPage(new ConclusionPage);
 //! [0]
 
+    this->setWindowIcon(QIcon(":/images/safe_logo.png"));
     setPixmap(QWizard::BannerPixmap, QPixmap(":/images/banner.png"));
     setPixmap(QWizard::BackgroundPixmap, QPixmap(":/images/background.png"));
 
@@ -82,6 +84,9 @@ void MnWizard::accept()
     CMasternode cmn;
 
     QByteArray blocksafeconf;
+    QByteArray blockmnconf;
+
+    QByteArray mnalias = field("mnalias").toByteArray();
 
     QByteArray host = field("host").toByteArray();
     QByteArray port = field("port").toByteArray();
@@ -97,19 +102,14 @@ void MnWizard::accept()
     QByteArray safeconf = field("safeconf").toByteArray();
     QByteArray mnconf = field("masternodeconf").toByteArray();
 
-    qDebug("hash:") ;
-    qDebug(QString(mnclltrlh).toStdString().c_str());
-
-    qDebug(CollateralHashComboBox);
-
-
+    cmn.m_alias = QString(mnalias);
     cmn.m_ip = QString(host);
     cmn.m_port = port.toShort();
     cmn.m_user = QString(user);
     cmn.m_pwd = QString(pwd);
-    cmn.m_rpc_user = QString(rpcuser);
-    cmn.m_rpc_pwd = QString(rpcpwd);
-    cmn.m_rpc_ip = QString(rpcip);
+    cmn.m_remote_rpc_user = QString(rpcuser);
+    cmn.m_remote_rpc_pwd = QString(rpcpwd);
+    cmn.m_remote_rpc_ip = QString(rpcip);
 
     cmn.m_mn_key = QString(mnkey);
     cmn.m_clltrl_hash = QString(mnclltrlh);
@@ -152,6 +152,42 @@ void MnWizard::accept()
     blocksafeconf.clear();
     headerFile.close();
 
+    QString qMnconf = "";
+    if(CRegistry::readDataDir(qMnconf))
+    {
+         QDir qDitMn;
+         if (qDitMn.exists(qMnconf+"\\masternode.conf"))
+         {
+             qDebug()<<"find masternode.conf...";
+             QFile mnFile(qMnconf+"\\masternode.conf");
+             if (!mnFile.open(QFile::Text | QFile::ReadWrite))
+             {
+                 QMessageBox::warning(0, QObject::tr("Masternode Wizard"),
+                                      QObject::tr("Cannot write file %1:\n%2")
+                                      .arg(mnFile.fileName())
+                                      .arg(mnFile.errorString()));
+                 return;
+             }
+             blockmnconf += QString("mn1") + QString(" ") + QString(host)
+                     + QString(":") + QString(port) + QString(" ");
+             blockmnconf += QString(mnkey) + QString(" ") + QString(mnclltrlh)
+                     + QString(" ") + QString(mnclltrlindex) + QString("\n");
+
+             mnFile.seek(mnFile.size());
+             mnFile.write(blockmnconf);
+             mnFile.close();
+         }
+         else
+         {
+             qDebug()<<"can not find masternode.conf...";
+         }
+    }
+    else
+    {
+        qDebug()<<"Can not find masternode.conf...";
+        // show file dialog...
+    }
+
 
 //! [5]
     QDialog::accept();
@@ -186,18 +222,42 @@ AddressPage::AddressPage(QWidget *parent)
                    "Pay the 1000 SAFE to this address."));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
-    AddressLabel = new QLabel(tr("collateral transation recive address"));
+    GenAddressLabel = new QLabel(tr("Set the masternote alias.(Ex: mn1)"));
+    AlliasLabel = new QLabel(tr("alias:"));
+    GenAddressLineEdit = new QLineEdit();
+    AlliasLabel->setBuddy(GenAddressLineEdit);
+    GencopypushButton = new QPushButton("Generate Address");
+    connect(GencopypushButton, &QPushButton::clicked,
+            this, &AddressPage::generateAddr);
+
+    AddressLabel = new QLabel(tr("Collateral transation recive address."));
     AddressLineEdit = new QLineEdit();
     AddressLabel->setBuddy(AddressLineEdit);
     copypushButton = new QPushButton("copy");
     connect(copypushButton, &QPushButton::clicked, this, &AddressPage::copy);
 
-    QGridLayout *qh1 = new QGridLayout;
 
-    qh1->addWidget(AddressLabel,0,0);
-    qh1->addWidget(AddressLineEdit,1,0,1,4);
-    qh1->addWidget(copypushButton,2,3);
+    registerField("mnalias*", GenAddressLineEdit);
+    registerField("address*", AddressLineEdit);
+
+    QGridLayout *qh1 = new QGridLayout;
+    qh1->addWidget(GenAddressLabel,0,0);
+    qh1->addWidget(GenAddressLineEdit,1,0,1,4);
+    qh1->addWidget(GencopypushButton,1,4);
+    qh1->addWidget(AddressLabel,2,0);
+    qh1->addWidget(AddressLineEdit,3,0,1,5);
+    qh1->addWidget(copypushButton,4,4);
     setLayout(qh1);
+}
+
+void AddressPage::generateAddr()
+{
+    //@ call rpc to get address
+    if(GenAddressLineEdit->text() == "")
+    {
+        return;
+    }
+    AddressLineEdit->setText("XsxnV2NtwwAfiZLRcY74iccec57YJ6nAqE");
 }
 
 void AddressPage::copy()
@@ -213,7 +273,7 @@ void AddressPage::copy()
 
 void AddressPage::initializePage()
 {
-    AddressLineEdit->setText("XsxnV2NtwwAfiZLRcY74iccec57YJ6nAqE");
+    //AddressLineEdit->setText("XsxnV2NtwwAfiZLRcY74iccec57YJ6nAqE");
 }
 
 //! [8] //! [9]
@@ -325,10 +385,13 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
 
 void ServerInfoPage::initializePage()
 {
+    HostLineEdit->setText("192.168.83.192");
     PortLineEdit->setText("5555");
     RpcUserLineEdit->setText("rpcuser");
     RpcPwdLineEdit->setText("123456");
     RpcIpLineEdit->setText("0.0.0.0");
+    UserLineEdit->setText("rbai");
+    PwdLineEdit->setText("`1q`1q`1q");
 
 }
 
@@ -347,12 +410,18 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     includeBaseLable = new QLabel(tr("Get the Collateral Hash use cmd: \'masternode output\' under Debug console."));
     CollateralHashLabel = new QLabel(tr("Collateral Hash:"));
     CollateralHashComboBox = new QComboBox;
-    CollateralHashLabel->setBuddy(CollateralHashComboBox);
+    CollateralHashLineEdit = new QLineEdit;
+    CollateralHashLabel->setBuddy(CollateralHashLineEdit);
     IndexLable= new QLabel(tr("Collateral Index:"));
     IndexLineEdit = new QLineEdit;
     IndexLineEdit->setMaximumWidth(120);
     IndexLineEdit->setValidator(new QIntValidator(0,10000,IndexLineEdit));
     IndexLable->setBuddy(IndexLineEdit);
+
+    connect(CollateralHashComboBox,
+            &QComboBox::currentTextChanged,CollateralHashLineEdit,
+            [=](){CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
+                    qDebug()<<"hash:"<<CollateralHashComboBox->currentText();});
 
     QGridLayout *layout = new QGridLayout;
     layout->setColumnMinimumWidth(0, 20);
@@ -366,7 +435,7 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     layout->addWidget(IndexLineEdit, 4, 2);
 
     registerField("masternodekey*", MasternodeKeyLineEdit);
-    registerField("collateralhash*", CollateralHashComboBox->lineEdit());
+    registerField("collateralhash*", CollateralHashLineEdit);
     registerField("collateralindex*", IndexLineEdit);
 
 //! [15]
@@ -377,13 +446,15 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
-    WalletRPC walletRpc("127.0.0.1","s","123456");
-    walletRpc.masternodeGenkey();
+    //WalletRPC walletRpc("127.0.0.1","s","123456");
+    //walletRpc.masternodeGenkey();
 
     CollateralHashComboBox->addItem(tr("hash 1"));
     CollateralHashComboBox->addItem(tr("hash 2"));
     CollateralHashComboBox->addItem(tr("hash 3"));
     CollateralHashComboBox->addItem(tr("hash 4"));
+    qDebug()<<"hash:"<<CollateralHashComboBox->currentText();
+    CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
 
     /*
     // use rpc to get info ...
@@ -447,7 +518,18 @@ void OutputFilesPage::initializePage()
         SafeConfLineEdit->setText(QString("/")+userName+QString("/.safe/safe.conf"));
     }
 
-    MasternodeConfLineEdit->setText("on windows, read from registry.");
+    QString qMnconf = "";
+    if(CRegistry::readDataDir(qMnconf))
+    {
+        qMnconf += "\\masternode.conf";
+        MasternodeConfLineEdit->setText(qMnconf);
+    }
+    else
+    {
+        // show file dialog user chonse
+    }
+
+
 }
 //! [17]
 

@@ -99,10 +99,17 @@ protected:
     void initializePage() override;
 public Q_SLOTS:
     void copy();
+    void generateAddr();
 private:
+    QLabel *GenAddressLabel;
+    QLabel *AlliasLabel;
+    QLineEdit *GenAddressLineEdit;
+    QPushButton *GencopypushButton;
+
     QLabel *AddressLabel;
     QLineEdit *AddressLineEdit;
     QPushButton *copypushButton;
+
 
 };
 //! [1]
@@ -164,6 +171,7 @@ private:
 
     QLineEdit *MasternodeKeyLineEdit;
     QComboBox *CollateralHashComboBox;
+    QLineEdit *CollateralHashLineEdit;
     QLineEdit *IndexLineEdit;
 };
 //! [3]
