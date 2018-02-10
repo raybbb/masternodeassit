@@ -7,10 +7,6 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    /*
-    masternodeassit w;
-    w.show();
-    */
     UIMnMain mn;
     mn.show();
 

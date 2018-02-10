@@ -131,7 +131,7 @@ QJsonObject WalletRPC::masternodeStatus()
 QJsonObject WalletRPC::masternodeOutputs()
 {
     qDebug() << "masternodeStatus";
-    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"debug\"]}");
+    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"outputs\"]}");
     QJsonValue retData = execCmd(array);
     QJsonObject subObj;
 

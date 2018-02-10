@@ -457,28 +457,31 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
          <item>
           <widget class="QPushButton" name="pb_upload">
            <property name="text">
-            <string>upload</string>
+            <string>上传配置</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pb_rechange">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
-            <string>rechange</string>
+            <string>修改节点</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pb_start">
            <property name="text">
-            <string>start</string>
+            <string>启动节点</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pb_stop">
            <property name="text">
-            <string>stop</string>
+            <string>停止节点</string>
            </property>
           </widget>
          </item>
@@ -505,12 +508,15 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
               </size>
              </property>
              <property name="text">
-              <string>Add Masternode</string>
+              <string>添加Masternode</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pb_remove">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -530,7 +536,7 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
               </size>
              </property>
              <property name="text">
-              <string>Remove Masternode</string>
+              <string>移除Masternode</string>
              </property>
             </widget>
            </item>

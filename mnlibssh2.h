@@ -130,6 +130,7 @@ private:
 private:
     int m_sock;
     int m_auth_pw;
+    bool isLoad;
     struct sockaddr_in m_sin;
     QLibrary m_mylib;
     SSH_FUNC m_ssh2;

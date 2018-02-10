@@ -470,7 +470,7 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
-    WalletRPC walletRpc("127.0.0.1",
+    WalletRPC walletRpc(/*"127.0.0.1"*/"192.168.2.253",
                         local_setting.local_rpc_user,
                         local_setting.local_rpc_pwd);
 
@@ -485,21 +485,26 @@ void MasternodeInfoPage::initializePage()
     }
 
     QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
-    foreach (auto key, qjsonOutput) {
-        qDebug()<<"key:"<<key.toString();
-        qDebug()<<"value:"<<qjsonOutput.value(key.toString()).toString();
-        if (local_setting.mn_old_info.find(key.toString())
-                !=local_setting.mn_old_info.end())
+    //QJsonObject qjsonOutput = walletRpc.getinfo();
+
+    for (QJsonObject::Iterator it = qjsonOutput.begin();
+         it!=qjsonOutput.end();it++)
+    {
+        qDebug()<<"key:"<<it.key();
+        qDebug()<<"value:"<<it.value().toString();
+
+        if (local_setting.mn_old_info.find(it.key())
+                != local_setting.mn_old_info.end())
         {
-            qDebug()<<"old key:"<<key.toString();
+            qDebug()<<"old key:"<<it.key();
         }
         else
         {
-            qDebug()<<"new key:"<<key.toString();
-            CollateralHashComboBox->addItem(key.toString());
+            qDebug()<<"new key:"<<it.key();
+            CollateralHashComboBox->addItem(it.key());
         }
-        local_setting.mn_new_info[key.toString()]
-                = qjsonOutput.value(key.toString()).toString();
+        local_setting.mn_new_info[it.key()] = it.value().toString();
+
     }
 
     CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());

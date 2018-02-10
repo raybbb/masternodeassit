@@ -8,7 +8,7 @@
 #endif
 
 mn_libssh2::mn_libssh2()
-    :m_mylib(("libssh2.dll")), mp_session(NULL)
+    :m_mylib(("libssh2.dll")), mp_session(NULL),isLoad(false)
 {
     if(m_mylib.load())
     {
@@ -42,13 +42,16 @@ mn_libssh2::mn_libssh2()
             m_ssh2.ssh2_channel_get_exit_status = (plibssh2_channel_get_exit_status)m_mylib.resolve("libssh2_channel_get_exit_status");
             m_ssh2.ssh2_channel_get_exit_signal = (plibssh2_channel_get_exit_signal)m_mylib.resolve("libssh2_channel_get_exit_signal");
             m_ssh2.ssh2_session_block_directions = (plibssh2_session_block_directions)m_mylib.resolve("libssh2_session_block_directions");
+            isLoad = true;
         }
         catch(...)
         {
+            isLoad = false;
         }
     }
     else
     {
+        isLoad = false;
         qDebug("Load ssh2 Dll failed!");
     }
 }

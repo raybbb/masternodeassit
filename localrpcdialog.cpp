@@ -1,4 +1,5 @@
 #include "localrpcdialog.h"
+#include "clocalsetting.h"
 
 LocalRpcPage::LocalRpcPage(QWidget *parent)
     : QWizardPage(parent)
@@ -47,6 +48,44 @@ LocalrpcDialog::LocalrpcDialog(QWidget *parent):
 
 void LocalrpcDialog::accept()
 {
+    /*
+    listen=1
+    server=1
+    daemon=1
+    logtimestamps=1
+    maxconnections=256
+    rpcuser=rbai
+    rpcpassword=092092092
+    rpcallowip=0.0.0.0/0
+    */
+
+     QByteArray rpcuser = field("rpcuser").toByteArray();
+     QByteArray rpcpwd = field("rpcpwd").toByteArray();
+
+     QString localSafeConfFile = local_setting.safe_conf_path + "/safe.conf";
+     qDebug()<< "*Local safe file: " << localSafeConfFile;
+     QFile file(localSafeConfFile);
+     if(file.exists())
+     {
+         if(file.open(QIODevice::ReadWrite))
+         {
+             QString conf = "listen=1\r\n"
+                             "server=1\r\n"
+                             "daemon=1\r\n"
+                             "logtimestamps=1\r\n"
+                             "maxconnections=256\r\n"
+                             "rpcallowip=0.0.0.0/0\r\n";
+             file.write(conf.toStdString().c_str());
+             file.write("rpcuser="+rpcuser+"\r\n");
+             file.write("rpcpassword="+rpcpwd+"\r\n");
+             file.close();
+         }
+         else
+         {
+             // @todo do some...
+         }
+     }
+
      QDialog::accept();
 }
 

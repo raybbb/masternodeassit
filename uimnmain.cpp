@@ -19,7 +19,7 @@
 #include <qt_windows.h>
 #endif
 
-QString ARR_MN_FILDNAME[] = {"Num","Alias","Addr","Port","Status"};
+QString ARR_MN_FILDNAME[] = {"编号","别名","地址","端口","状态"};
 
 void UIMnMain::mousePressEvent(QMouseEvent *event)
 {
@@ -130,20 +130,14 @@ void UIMnMain::initSetting()
 
         if(hasConfigRpc != 2)
         {
+            LocalrpcDialog llrpc;
+            llrpc.exec();
+            /*
             if(file.open(QIODevice::ReadWrite))
             {
-                /*
-                file.write("rpcuser=s\r\n");
-                file.write("rpcpassword=bankledger\r\n");
-                */
-                // @todo show input diolg to fill rpcuser and password;
-
-                /*ConfigDialog dialog;
-                dialog.exec();*/
-                LocalrpcDialog llrpc;
-                llrpc.exec();
                 file.close();
             }
+            */
         }
     }
     else
@@ -209,7 +203,7 @@ void UIMnMain::initTableWidget()
     ui->tableWidget->verticalHeader()->setDefaultSectionSize(25);
 
     QStringList headText;
-    headText << "Num" << "Alias" << "Addr" << "Port" << "Status";
+    headText << "编号" << "别名" << "地址" << "端口" << "状态";
     ui->tableWidget->setHorizontalHeaderLabels(headText);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
