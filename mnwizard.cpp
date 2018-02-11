@@ -173,7 +173,10 @@ void MnWizard::accept()
                                       .arg(mnFile.errorString()));
                  return;
              }
-             blockmnconf += QString("mn1") + QString(" ") + QString(host)
+
+             blockmnconf += "\n";
+
+             blockmnconf += QString(mnalias) + QString(" ") + QString(host)
                      + QString(":") + QString(port) + QString(" ");
              blockmnconf += QString(mnkey) + QString(" ") + QString(mnclltrlh)
                      + QString(" ") + QString(mnclltrlindex) + QString("\n");

@@ -48,13 +48,6 @@ UIMnMain::UIMnMain(QWidget *parent):
     S_MNSTATUS<<QString("UNLOAD")<<QString("LOADED")<<QString("DISABLE")<<QString("ENABLE");
 
     connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
-    //connect(, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
-/*
-    ui->tableWidget->verticalHeader()->setStyleSheet
-            ("QHeaderView::section{background-color:rgba(232,255,213,5);}");
-    ui->tableWidget->horizontalHeader()->setStyleSheet
-            ("QHeaderView::section{background-color:rgba(232,255,213,5);}");
-            */
     qApp->setStyleSheet("QTableCornerButton::section{background-color:rgba(232,255,213,5);}");
 
     QFile file(":/images/s.qss");
@@ -334,8 +327,8 @@ void UIMnMain::initForm()
     this->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
     //ui->widgetTitle->setVisible(false);
 
-    ui->labTitle->setText("Masternode管理平台");
-    this->setWindowTitle("Masternode管理平台");
+    ui->labTitle->setText("Masternode快速搭建工具");
+    this->setWindowTitle("Masternode快速搭建工具");
 
     QList<QToolButton *> btns = ui->widgetLeft->findChildren<QToolButton *>();
     foreach (QToolButton *btn, btns) {
