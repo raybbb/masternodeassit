@@ -17,7 +17,13 @@ public:
     QString remote_rpc_user;
     QString remote_rpc_pwd;
     QString remote_rpc_ip;
-    QString script_path;
+    QString local_script_path;
+    QString remote_script_path;
+    QString install_script;
+    QString start_script;
+    QString restart_script;
+    QString stop_script;
+
     map<QString, QString> mn_old_info;
     map<QString, QString> mn_new_info;
 };

@@ -79,6 +79,9 @@ void LocalrpcDialog::accept()
              file.write("rpcuser="+rpcuser+"\r\n");
              file.write("rpcpassword="+rpcpwd+"\r\n");
              file.close();
+
+             local_setting.local_rpc_user = rpcuser;
+             local_setting.local_rpc_pwd = rpcpwd;
          }
          else
          {

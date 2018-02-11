@@ -7,6 +7,8 @@
 #include "frametitlebar.h"
 #include "cmasternode.h"
 #include "mnwizard.h"
+#include "cstartmasternode.h"
+
 using namespace std;
 
 namespace Ui {
@@ -33,6 +35,7 @@ private:
     void removeTableWidgetItem(int nIndex);
     void initSetting();
 
+
 private:
     Ui::UIMnMain *ui;
     bool max;
@@ -41,6 +44,8 @@ private:
     map<QString, CMasternode> mMasternodes;
     QString current_ip;
     CMasternode current_mn;
+    QTimer *timer;
+    CStartMasternode mns;
 
 private slots:
     void initForm();
@@ -59,6 +64,8 @@ private slots:
     void on_pb_remove_clicked();
     void on_pb_upload_clicked();
     void on_pb_start_clicked();
+    void ShowInfoMessage();
+    void ShowMasternodeStatusMessage();
 };
 
 #endif // UUIMAIN_H

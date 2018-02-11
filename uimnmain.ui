@@ -427,7 +427,20 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
           <number>10</number>
          </property>
          <item>
-          <widget class="QTableWidget" name="tableWidget"/>
+          <widget class="QTextEdit" name="textEdit_log">
+           <property name="cursor" stdset="0">
+            <cursorShape>ArrowCursor</cursorShape>
+           </property>
+           <property name="mouseTracking">
+            <bool>false</bool>
+           </property>
+           <property name="tabletTracking">
+            <bool>false</bool>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -456,6 +469,9 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
          </item>
          <item>
           <widget class="QPushButton" name="pb_upload">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>上传配置</string>
            </property>
@@ -473,6 +489,9 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
          </item>
          <item>
           <widget class="QPushButton" name="pb_start">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>启动节点</string>
            </property>
@@ -480,6 +499,9 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
          </item>
          <item>
           <widget class="QPushButton" name="pb_stop">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>停止节点</string>
            </property>

@@ -50,10 +50,19 @@ QJsonValue WalletRPC::parseResponse(QByteArray &responseData)
         if (json.isObject())
         {
             QJsonObject respObj = json.object();
-
-            if (respObj.contains("result"))
+            if (respObj.contains("error") && respObj.contains("result"))
             {
-                value = respObj.value("result");
+                if(!respObj.value("error").isObject())
+                {
+                    value = respObj.value("result");
+                }
+                else
+                {
+                    qDebug() << "parseResponse get result error!";
+                    respObj.value("error");
+                    QJsonObject subObj = respObj.value("error").toObject();
+                    qDebug() << subObj.value("message");
+                }
             }
         }
     }
@@ -62,7 +71,7 @@ QJsonValue WalletRPC::parseResponse(QByteArray &responseData)
         qDebug() << "request rpc error!!";
     }
 
-    qDebug() << value.toString();
+    //qDebug() << value.toString();
     return value;
 }
 
@@ -113,6 +122,7 @@ void WalletRPC::masternodeStop()
     execCmd(array);
 }
 */
+
 QJsonObject WalletRPC::masternodeStatus()
 {
     qDebug() << "masternodeStatus";

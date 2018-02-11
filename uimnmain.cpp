@@ -5,6 +5,7 @@
 #include "cregistry.h"
 #include "localrpcdialog.h"
 
+
 #include <QDesktopWidget>
 #include <QDateTime>
 #include <QFile>
@@ -48,11 +49,12 @@ UIMnMain::UIMnMain(QWidget *parent):
 
     connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
     //connect(, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
-
+/*
     ui->tableWidget->verticalHeader()->setStyleSheet
             ("QHeaderView::section{background-color:rgba(232,255,213,5);}");
     ui->tableWidget->horizontalHeader()->setStyleSheet
             ("QHeaderView::section{background-color:rgba(232,255,213,5);}");
+            */
     qApp->setStyleSheet("QTableCornerButton::section{background-color:rgba(232,255,213,5);}");
 
     QFile file(":/images/s.qss");
@@ -69,13 +71,101 @@ UIMnMain::UIMnMain(QWidget *parent):
 
     initTableWidget();
     initSetting();
+
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(ShowInfoMessage()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(ShowMasternodeStatusMessage()));
+
+}
+
+void UIMnMain::ShowMasternodeStatusMessage()
+{
+    //ui->textEdit_log->append("show log:");
+
+
+    WalletRPC wallet(local_setting.remote_rpc_ip,
+                     local_setting.remote_rpc_user,
+                     local_setting.remote_rpc_pwd);
+
+    ui->textEdit_log->append("======================================================================");
+    ui->textEdit_log->append("Masternode节点信息：");
+
+    QJsonObject qjObj = wallet.masternodeStatus();
+    //QJsonObject qjObj = wallet.getinfo();
+
+    if(qjObj.size() > 0)
+    {
+        for (QJsonObject::Iterator it = qjObj.begin();
+             it!=qjObj.end();it++)
+        {
+            qDebug()<<"key:"<<it.key() << ": " <<it.value();
+
+            if (it.value().isDouble())
+            {
+                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
+                                         +"\t" + it.key()+" : "+ QString("%1").arg(it.value().toDouble()) );
+            }
+            else if (it.value().isString())
+            {
+                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
+                                         +"\t" + it.key()+" : "+it.value().toString());
+            }
+        }
+    }
+    else
+    {
+        ui->textEdit_log->append("无~");
+    }
+
+}
+
+void UIMnMain::ShowInfoMessage()
+{
+    WalletRPC wallet("127.0.0.1",
+                     local_setting.local_rpc_user,
+                     local_setting.local_rpc_pwd);
+
+    QJsonObject qjObj = wallet.getinfo();
+
+    ui->textEdit_log->append("======================================================================");
+    ui->textEdit_log->append("区块信息：");
+    if (qjObj.size()>0)
+    {
+        for (QJsonObject::Iterator it = qjObj.begin();
+             it!=qjObj.end();it++)
+        {
+            qDebug()<<"key:"<<it.key() << ": " <<it.value();
+
+            if (it.value().isDouble())
+            {
+                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
+                                         +"\t" + it.key()+" : "+ QString("%1").arg(it.value().toDouble()) );
+            }
+            else if (it.value().isString())
+            {
+                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
+                                         +"\t" + it.key()+" : "+it.value().toString());
+            }
+        }
+    }
+    else
+    {
+         ui->textEdit_log->append("无~");
+    }
+
+    //ui->textEdit_log->append("======================================================================");
 }
 
 void UIMnMain::initSetting()
 {
     //@todo read rpc from /safe.conf
-    local_setting.new_safe_conf_files_path = "./safeconf";
-    local_setting.script_path = "./script";
+    local_setting.new_safe_conf_files_path = "./safeconf/";
+    local_setting.local_script_path = "./script/";
+    local_setting.install_script = "auto_install_safe.py";
+    local_setting.start_script = "masternode_start.sh";
+    local_setting.restart_script = "masternode_restart.sh";
+    local_setting.stop_script = "masternode_stop.sh";
+
     if(!CRegistry::readDataDir(local_setting.safe_conf_path))
     {
         //@todo safe haven't install. or show dialg to selet path of safe data.
@@ -132,12 +222,6 @@ void UIMnMain::initSetting()
         {
             LocalrpcDialog llrpc;
             llrpc.exec();
-            /*
-            if(file.open(QIODevice::ReadWrite))
-            {
-                file.close();
-            }
-            */
         }
     }
     else
@@ -162,8 +246,6 @@ void UIMnMain::initSetting()
                     QList<QByteArray> qList = mn_conf_line.split(' ');
                     if(qList.size() > 4)
                     {
-                        qDebug()<< "3:"<<qList[3];
-                        qDebug()<< "4:"<<qList[4];
                         local_setting.mn_old_info[qList[3]] = qList[4];
                     }
                 }
@@ -192,6 +274,7 @@ UIMnMain::~UIMnMain()
 
 void UIMnMain::initTableWidget()
 {
+    /*
     //设置列数和列宽
     int width = qApp->desktop()->availableGeometry().width() - 120;
     ui->tableWidget->setColumnCount(5);
@@ -211,7 +294,7 @@ void UIMnMain::initTableWidget()
     ui->tableWidget->setAlternatingRowColors(true);
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
-
+*/
     /*
     //设置行高
     ui->tableWidget->setRowCount(40);
@@ -264,6 +347,7 @@ void UIMnMain::initForm()
 
 void UIMnMain::insertTableWidgetItem(CMasternode cmn)
 {
+    /*
     int nRc = ui->tableWidget->rowCount();
     ui->tableWidget->setRowCount(++nRc);
     ui->tableWidget->setRowHeight(nRc, 24);
@@ -287,6 +371,7 @@ void UIMnMain::insertTableWidgetItem(CMasternode cmn)
     ui->tableWidget->setItem(nRc-1, 3, itemContent);
     ui->tableWidget->setItem(nRc-1, 4, itemTime);
     ui->tableWidget->selectRow(nRc);
+    */
 
 }
 
@@ -296,7 +381,7 @@ void UIMnMain::removeTableWidgetItem(CMasternode cmn)
 
 void UIMnMain::removeTableWidgetItem(int nIndex)
 {
-    ui->tableWidget->removeRow(nIndex);
+    //ui->tableWidget->removeRow(nIndex);
 }
 
 void UIMnMain::buttonClick()
@@ -324,6 +409,7 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     mMasternodes[cmn.m_ip].m_status = S_MNSTATUS[UNLOAD];
     insertTableWidgetItem(mMasternodes[cmn.m_ip]);
     show_masternode(cmn);
+    ui->pb_upload->setEnabled(true);
     current_ip = cmn.m_ip;
 
     local_setting.remote_rpc_ip = cmn.m_remote_rpc_ip;
@@ -331,7 +417,6 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     local_setting.remote_rpc_pwd = cmn.m_remote_rpc_pwd;
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
-
 }
 
 void UIMnMain::show_masternode(const CMasternode &cmn)
@@ -397,6 +482,7 @@ void UIMnMain::on_tableWidget_itemClicked(QTableWidgetItem *item)
 
 void UIMnMain::on_tableWidget_clicked(const QModelIndex &index)
 {
+    /*
     int iRow = ui->tableWidget->currentRow();
     int iC = ui->tableWidget->columnCount();
     QString qsHtml = "<th>Masternoede Info</th>";
@@ -425,41 +511,19 @@ void UIMnMain::on_tableWidget_clicked(const QModelIndex &index)
     local_setting.remote_rpc_pwd = cmn.m_remote_rpc_pwd;
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
+    */
 }
 
 void UIMnMain::on_pb_remove_clicked()
 {
-    removeTableWidgetItem(ui->tableWidget->currentRow());
-
-    /*
-    mn_libssh2 ssh2;
-    ssh2.mn_init();
-    ssh2.mn_login("45.77.147.225","ray","jinxiaobai3304");
-
-    ssh2.mn_exec("ls -l > bbb.xxx");
-
-    ssh2.mn_scp_read("c:/abc.txt","/home/ray/tt.a");
-
-    mn_libssh2 ssh2;
-    ssh2.mn_init();
-    ssh2.mn_login("45.77.147.225","ray","jinxiaobai3304");
-    int nRet = ssh2.mn_scp_write("/home/ray/aaa.a","c:/b.txt");
-    if(nRet!=0)
-    {
-        qDebug("Copy Error ...");
-    }
-    nRet = ssh2.mn_scp_write("/home/ray/bbb.a","c:/b.txt");
-    if(nRet!=0)
-    {
-        qDebug("Copy Error ...");
-    }
-    */
+    //removeTableWidgetItem(ui->tableWidget->currentRow());
 }
 
 void UIMnMain::on_pb_upload_clicked()
 {
      if (current_ip != "")
      {
+         ui->pb_upload->setEnabled(false);
          mn_libssh2 ssh2;
          ssh2.mn_init();
 
@@ -470,16 +534,82 @@ void UIMnMain::on_pb_upload_clicked()
          if (!nRc)
          {
              nRc = ssh2.mn_scp_write(cmd.m_safe_conf_path.toStdString().c_str(),
-                               (QString("./safeconf/")+current_ip).toStdString().c_str());
+                               (local_setting.new_safe_conf_files_path+current_ip)
+                                     .toStdString().c_str());
              if (!nRc)
              {
-                 qDebug("upload the file success.");
+                 qDebug("upload the safe.conf file success.");
              }
              else
              {
-                 qDebug("upload the file failed.");
+                 qDebug("upload the safe.conf file failed.");
+                 return;
+             }
+
+             // @todo upload those script...
+             nRc = ssh2.mn_scp_write(
+                         (local_setting.remote_script_path+local_setting.install_script)
+                         .toStdString().c_str(),
+                         (local_setting.local_script_path+local_setting.install_script)
+                         .toStdString().c_str());
+             if (!nRc)
+             {
+                 qDebug("upload the install file success.");
+             }
+             else
+             {
+                 qDebug("upload the install file failed.");
+                 qDebug()<<"localfile: " <<local_setting.local_script_path+local_setting.install_script;
+                 qDebug()<<"remotefile: " <<local_setting.remote_script_path+local_setting.install_script;
+                 return;
+             }
+
+             nRc = ssh2.mn_scp_write(
+                         (local_setting.remote_script_path+local_setting.start_script)
+                         .toStdString().c_str(),
+                         (local_setting.local_script_path+local_setting.start_script)
+                         .toStdString().c_str());
+             if (!nRc)
+             {
+                 qDebug("upload the start file success.");
+             }
+             else
+             {
+                 qDebug("upload the start file failed.");
+                 return;
+             }
+             // @todo upload those script...
+             nRc = ssh2.mn_scp_write(
+                         (local_setting.remote_script_path+local_setting.restart_script)
+                         .toStdString().c_str(),
+                         (local_setting.local_script_path+local_setting.restart_script)
+                         .toStdString().c_str());
+             if (!nRc)
+             {
+                 qDebug("upload the restart file success.");
+             }
+             else
+             {
+                 qDebug("upload the restart file failed.");
+                 return;
+             }
+             // @todo upload those script...
+             nRc = ssh2.mn_scp_write(
+                         (local_setting.remote_script_path+local_setting.stop_script)
+                         .toStdString().c_str(),
+                         (local_setting.local_script_path+local_setting.stop_script)
+                         .toStdString().c_str());
+             if (!nRc)
+             {
+                 qDebug("upload the stop file success.");
+             }
+             else
+             {
+                 qDebug("upload the stop file failed.");
+                 return;
              }
          }
+         ui->pb_start->setEnabled(true);
      }
      else
      {
@@ -491,6 +621,13 @@ void UIMnMain::on_pb_start_clicked()
 {
     if (current_ip != "")
     {
+
+        CMasternode cmd = mMasternodes[current_ip];
+        mns.set(cmd.m_ip,cmd.m_user,cmd.m_pwd);
+        mns.start();
+        timer->start(5000);
+
+        /*
         mn_libssh2 ssh2;
         ssh2.mn_init();
 
@@ -500,18 +637,14 @@ void UIMnMain::on_pb_start_clicked()
                       cmd.m_pwd.toStdString().c_str());
         if (!nRc)
         {
-            nRc = ssh2.mn_scp_write("/home/rbai/start_test.py",
-                              (QString("./script/")+"start_test.py").toStdString().c_str());
-            if (!nRc)
-            {
-                qDebug("upload the file success.");
-                ssh2.mn_exec("python /home/rbai/start_test.py");
-            }
-            else
-            {
-                qDebug("upload the file failed.");
-            }
+
+            ssh2.mn_exec(QString("python" + QString(" ")
+                         + local_setting.remote_script_path
+                         + local_setting.install_script).toStdString().c_str());
+
+            timer->start(5000);
         }
+        */
     }
     else
     {

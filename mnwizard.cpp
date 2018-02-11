@@ -403,14 +403,11 @@ ServerInfoPage::ServerInfoPage(QWidget *parent)
 
 void ServerInfoPage::initializePage()
 {
-    HostLineEdit->setText("192.168.83.192");
     PortLineEdit->setText("5555");
-    RpcUserLineEdit->setText("rpcuser");
-    RpcPwdLineEdit->setText("123456");
+    PortLineEdit->setEnabled(false);
+    RpcUserLineEdit->setText(local_setting.local_rpc_user);
+    RpcPwdLineEdit->setText(local_setting.local_rpc_pwd);
     RpcIpLineEdit->setText("0.0.0.0/0");
-    UserLineEdit->setText("rbai");
-    PwdLineEdit->setText("`1q`1q`1q");
-
 }
 
 MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
@@ -457,10 +454,18 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     layout->addWidget(CollateralHashComboBox, 3, 2);
     layout->addWidget(IndexLable, 4, 1);
     layout->addWidget(IndexLineEdit, 4, 2);
-
+//#define _Debug
+    /*
+#ifdef _Debug
+    registerField("masternodekey", MasternodeKeyLineEdit);
+    registerField("collateralhash", CollateralHashLineEdit);
+    registerField("collateralindex", IndexLineEdit);
+#elif
+*/
     registerField("masternodekey*", MasternodeKeyLineEdit);
     registerField("collateralhash*", CollateralHashLineEdit);
     registerField("collateralindex*", IndexLineEdit);
+//#endif
 
 //! [15]
     setLayout(layout);
@@ -470,7 +475,7 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
-    WalletRPC walletRpc(/*"127.0.0.1"*/"192.168.2.253",
+    WalletRPC walletRpc("127.0.0.1",
                         local_setting.local_rpc_user,
                         local_setting.local_rpc_pwd);
 
@@ -485,7 +490,6 @@ void MasternodeInfoPage::initializePage()
     }
 
     QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
-    //QJsonObject qjsonOutput = walletRpc.getinfo();
 
     for (QJsonObject::Iterator it = qjsonOutput.begin();
          it!=qjsonOutput.end();it++)
@@ -508,14 +512,6 @@ void MasternodeInfoPage::initializePage()
     }
 
     CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
-
-    /*CollateralHashComboBox->addItem(tr("hash 2"));
-    CollateralHashComboBox->addItem(tr("hash 3"));
-    CollateralHashComboBox->addItem(tr("hash 4"));
-    qDebug()<<"hash:"<<CollateralHashComboBox->currentText();
-    CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
-    */
-
 }
 //! [16]
 
@@ -559,10 +555,12 @@ void OutputFilesPage::initializePage()
     if(userName.compare("root",Qt::CaseInsensitive))
     {
         SafeConfLineEdit->setText(QString("/home/")+userName+QString("/safe.conf"));
+        local_setting.remote_script_path = QString("/home/")+userName+QString("/");
     }
     else
     {
         SafeConfLineEdit->setText(QString("/")+userName+QString("/safe.conf"));
+        local_setting.remote_script_path = QString("/") + userName+QString("/");
     }
 
     QString qMnconf = "";

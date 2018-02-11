@@ -28,7 +28,7 @@ def main():
         ret = subprocess.call(mkdir_cmd, shell=True)
 
         #step 4: copy files
-        cp_file_to_home = 'cp ./safe.conf' + safe_home
+        cp_file_to_home = 'cp ./safe.conf ' + safe_home
         ret = subprocess.call(cp_file_to_home, shell=True)
 
         cp_file_to_home = 'cp ./safe_v1.0.1/safed ' + safe_home
