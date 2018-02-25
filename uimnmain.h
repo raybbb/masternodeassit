@@ -8,6 +8,7 @@
 #include "cmasternode.h"
 #include "mnwizard.h"
 #include "cstartmasternode.h"
+#include "database.h"
 
 using namespace std;
 
@@ -35,6 +36,8 @@ private:
     void removeTableWidgetItem(int nIndex);
     void initSetting();
 
+    void initDatabase();
+
 
 private:
     Ui::UIMnMain *ui;
@@ -46,6 +49,7 @@ private:
     CMasternode current_mn;
     QTimer *timer;
     CStartMasternode mns;
+    Database mydb;
 
 private slots:
     void initForm();

@@ -1,9 +1,17 @@
 #ifndef CMASTERNODE_H
 #define CMASTERNODE_H
 #include <QString>
+#include <QDataStream>
 
 class CMasternode
 {
+public:
+    //CMasternode& operator =(const CMasternode &other);
+    friend QDataStream& operator >>(QDataStream& in, CMasternode& data);
+    friend QDataStream& operator <<(QDataStream& out, const CMasternode& data);
+    CMasternode& DeSerializable(const QByteArray &datagram);
+    QByteArray& Serializable(const CMasternode &cmn);
+
 public:
     int m_num;
     QString m_alias;
@@ -24,6 +32,7 @@ public:
     QString m_safe_conf_path;
     QString m_mn_conf_path;
     QString m_mn_step;
+
 };
 
 #endif // CMASTERNODE_H

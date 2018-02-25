@@ -151,6 +151,9 @@ void UIMnMain::ShowInfoMessage()
 void UIMnMain::initDatabase()
 {
     mydb.createMnTable();
+    
+    CMasternode mn;
+    
 }
 
 void UIMnMain::initSetting()

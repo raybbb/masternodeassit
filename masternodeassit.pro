@@ -38,7 +38,8 @@ SOURCES += \
     cregistry.cpp \
     clocalsetting.cpp \
     localrpcdialog.cpp \
-    cstartmasternode.cpp
+    cstartmasternode.cpp \
+    database.cpp
 
 
 
@@ -60,7 +61,8 @@ HEADERS += \
     cregistry.h \
     clocalsetting.h \
     localrpcdialog.h \
-    cstartmasternode.h
+    cstartmasternode.h \
+    database.h
 
 FORMS += \
         masternodeassit.ui \

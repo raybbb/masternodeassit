@@ -96,7 +96,7 @@ image:None;
         </property>
         <property name="minimumSize">
          <size>
-          <width>60</width>
+          <width>32</width>
           <height>0</height>
          </size>
         </property>
@@ -121,7 +121,7 @@ image:None;
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>24</width>
+          <width>10</width>
           <height>20</height>
          </size>
         </property>

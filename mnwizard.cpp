@@ -193,7 +193,7 @@ void MnWizard::accept()
     else
     {
         qDebug()<<"Can not find masternode.conf...";
-        // show file dialog...
+        // @TODO show file dialog...
     }
 
 
@@ -574,7 +574,7 @@ void OutputFilesPage::initializePage()
     }
     else
     {
-        // show file dialog user chonse
+        //@TODO show file dialog user chonse
     }
 }
 //! [17]
