@@ -122,6 +122,14 @@ void MnWizard::accept()
     cmn.m_safe_conf_path = QString(safeconf);
     cmn.m_mn_conf_path = QString(mnconf);
 
+    /*
+    // @Test 序列化
+    qDebug()<<"@@@ Test Serializable...";
+    QByteArray tmp_array = CMasternode::Serializable(cmn);
+    CMasternode cmn_ds =  CMasternode::DeSerializable(tmp_array);
+    qDebug()<<"@@@ Test DeSerializable:"<< cmn_ds.m_ip;
+    */
+
     emit sigMasternodeAdd(cmn);
 
     blocksafeconf += "rpcuser=" + rpcuser + "\n";
@@ -457,18 +465,18 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     layout->addWidget(CollateralHashComboBox, 3, 2);
     layout->addWidget(IndexLable, 4, 1);
     layout->addWidget(IndexLineEdit, 4, 2);
-//#define _Debug
-    /*
+
+#define _Debug
 #ifdef _Debug
     registerField("masternodekey", MasternodeKeyLineEdit);
     registerField("collateralhash", CollateralHashLineEdit);
     registerField("collateralindex", IndexLineEdit);
 #elif
-*/
+
     registerField("masternodekey*", MasternodeKeyLineEdit);
     registerField("collateralhash*", CollateralHashLineEdit);
     registerField("collateralindex*", IndexLineEdit);
-//#endif
+#endif
 
 //! [15]
     setLayout(layout);

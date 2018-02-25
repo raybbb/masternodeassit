@@ -9,8 +9,8 @@ public:
     //CMasternode& operator =(const CMasternode &other);
     friend QDataStream& operator >>(QDataStream& in, CMasternode& data);
     friend QDataStream& operator <<(QDataStream& out, const CMasternode& data);
-    CMasternode& DeSerializable(const QByteArray &datagram);
-    QByteArray& Serializable(const CMasternode &cmn);
+    static CMasternode DeSerializable(const QByteArray &datagram);
+    static QByteArray Serializable(const CMasternode &cmn);
 
 public:
     int m_num;

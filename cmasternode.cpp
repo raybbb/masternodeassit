@@ -35,7 +35,7 @@ QDataStream& operator<<(QDataStream& out, const CMasternode& data)
      return out;
 }
 
-CMasternode& CMasternode::DeSerializable(const QByteArray &datagram)
+CMasternode CMasternode::DeSerializable(const QByteArray &datagram)
 {
     QByteArray tmp_array = datagram;
     QBuffer buffer(&tmp_array);
@@ -48,7 +48,7 @@ CMasternode& CMasternode::DeSerializable(const QByteArray &datagram)
     return cmn;
 }
 
-QByteArray& CMasternode::Serializable(const CMasternode &cmn)
+QByteArray CMasternode::Serializable(const CMasternode &cmn)
 {
     QByteArray tmp_array;
     QBuffer buffer(&tmp_array);

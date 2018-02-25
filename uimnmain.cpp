@@ -414,8 +414,13 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
 
+    QByteArray tmp_array = CMasternode::Serializable(cmn);
 
-    //mydb.addMn();
+    mydb.addMn(cmn.m_ip, tmp_array);
+
+    QMap<QString, QByteArray> dataxx = mydb.queryData();
+    qDebug()<<"Table size: "<<dataxx.size();
+
 }
 
 void UIMnMain::show_masternode(const CMasternode &cmn)
