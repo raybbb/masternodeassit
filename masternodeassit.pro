@@ -39,7 +39,8 @@ SOURCES += \
     clocalsetting.cpp \
     localrpcdialog.cpp \
     cstartmasternode.cpp \
-    database.cpp
+    database.cpp \
+    changedialog.cpp
 
 
 
@@ -62,7 +63,8 @@ HEADERS += \
     clocalsetting.h \
     localrpcdialog.h \
     cstartmasternode.h \
-    database.h
+    database.h \
+    changedialog.h
 
 FORMS += \
         masternodeassit.ui \

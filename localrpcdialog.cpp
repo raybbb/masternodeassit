@@ -44,21 +44,13 @@ LocalrpcDialog::LocalrpcDialog(QWidget *parent):
    this->setWindowTitle("本地RPC输入框");
    this->setButtonText(WizardButton::FinishButton,"完 成");
    this->setButtonText(WizardButton::CancelButton,"取 消");
+
+
+
 }
 
 void LocalrpcDialog::accept()
 {
-    /*
-    listen=1
-    server=1
-    daemon=1
-    logtimestamps=1
-    maxconnections=256
-    rpcuser=rbai
-    rpcpassword=092092092
-    rpcallowip=0.0.0.0/0
-    */
-
      QByteArray rpcuser = field("rpcuser").toByteArray();
      QByteArray rpcpwd = field("rpcpwd").toByteArray();
 

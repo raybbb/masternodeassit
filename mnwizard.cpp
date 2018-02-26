@@ -122,14 +122,6 @@ void MnWizard::accept()
     cmn.m_safe_conf_path = QString(safeconf);
     cmn.m_mn_conf_path = QString(mnconf);
 
-    /*
-    // @Test 序列化
-    qDebug()<<"@@@ Test Serializable...";
-    QByteArray tmp_array = CMasternode::Serializable(cmn);
-    CMasternode cmn_ds =  CMasternode::DeSerializable(tmp_array);
-    qDebug()<<"@@@ Test DeSerializable:"<< cmn_ds.m_ip;
-    */
-
     emit sigMasternodeAdd(cmn);
 
     blocksafeconf += "rpcuser=" + rpcuser + "\n";
@@ -192,6 +184,8 @@ void MnWizard::accept()
              mnFile.seek(mnFile.size());
              mnFile.write(blockmnconf);
              mnFile.close();
+
+             local_setting.mn_alias<<mnalias;  // 将别名放入别名列表，防止连续添加出现相同的别名
          }
          else
          {
@@ -271,10 +265,23 @@ AddressPage::AddressPage(QWidget *parent)
 
 void AddressPage::generateAddr()
 {
-    if(GenAddressLineEdit->text() == "")
+    // 先检查别名是否已经在Masternode列表里面
+    QString mn_alias = GenAddressLineEdit->text();
+    if (mn_alias == "")
     {
         return;
     }
+
+    if (local_setting.mn_alias.contains(mn_alias))
+    {
+        // @todo show message to user
+        qDebug("name is already in mansternodelist ");
+        QMessageBox::information(this,tr("Masternode Help"),
+                                 tr("设置的别名已经在主节点列表里存在，请修改别名避免冲突"));
+        GenAddressLineEdit->setFocus();
+        return;
+    }
+
     WalletRPC wallet("127.0.0.1",
                      local_setting.local_rpc_user,
                      local_setting.local_rpc_pwd);

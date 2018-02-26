@@ -19,9 +19,7 @@ class UIMnMain;
 class UIMnMain : public QDialog
 {
     Q_OBJECT
-
     typedef enum {UNLOAD=0,LOADED,DISABLE,ENABLE} E_MNSTATUS;
-
     QStringList S_MNSTATUS ;//("UNLOAD","LOADED","DISABLE");
 protected:
     // 进行鼠界面的拖动
@@ -37,7 +35,6 @@ private:
     void initSetting();
 
     void initDatabase();
-
 
 private:
     Ui::UIMnMain *ui;
@@ -57,6 +54,9 @@ private slots:
     void buttonClick();
     void recvMnInfo(const CMasternode &cmn);
     void show_masternode(const CMasternode &cmn);
+    void ShowInfoMessage();
+    void ShowMasternodeStatusMessage();
+    void mnSetupComplete();
 
 private slots:
     void on_btnMenu_Min_clicked();
@@ -68,8 +68,7 @@ private slots:
     void on_pb_remove_clicked();
     void on_pb_upload_clicked();
     void on_pb_start_clicked();
-    void ShowInfoMessage();
-    void ShowMasternodeStatusMessage();
+    void on_pb_rechange_clicked();
 };
 
 #endif // UUIMAIN_H

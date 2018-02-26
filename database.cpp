@@ -87,8 +87,8 @@ QMap<QString, QByteArray> Database::queryData()
         {
             QString strDt;
             QByteArray data;
-            strDt = query.value(1).toString();
-            data = query.value(2).toByteArray();
+            strDt = query.value("ip").toString();
+            data = query.value("seqdata").toByteArray();
             dbMap[strDt] = data;
         }
     }
@@ -104,16 +104,17 @@ QMap<QString, QByteArray> Database::queryData()
 QByteArray Database::queryData(const QString &qsIp)
 {
     QSqlQuery query(sqldb);
-    QString strDt;
     QByteArray data;
-
-    if (query.exec("SELECT * from t_master_node where ip=\"" + qsIp + "\""))
+    if (query.exec("SELECT * from t_master_node where ip='" + qsIp + "'"))
     {
         while (query.next())
         {
-            strDt = query.value(1).toString();
-            data = query.value(2).toByteArray();
+            data = query.value("seqdata").toByteArray();
         }
+    }
+    else
+    {
+        // @todo log...
     }
     return data;
 }

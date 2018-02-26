@@ -1,6 +1,8 @@
 #ifndef CLOCALSETTING_H
 #define CLOCALSETTING_H
 #include <QString>
+#include <QStringList>
+
 #include <map>
 using namespace std;
 
@@ -26,9 +28,11 @@ public:
 
     map<QString, QString> mn_old_info;
     map<QString, QString> mn_new_info;
+    QStringList  mn_alias;  // 保存别名，防止别名冲突在钱包中不显示
 };
 
 
 extern CLocalSetting local_setting;
+extern QString g_current_ip;
 
 #endif // CLOCALSETTING_H

@@ -4,6 +4,7 @@
 #include "clocalsetting.h"
 #include "cregistry.h"
 #include "localrpcdialog.h"
+#include "changedialog.h"
 
 #include <QDesktopWidget>
 #include <QDateTime>
@@ -45,9 +46,12 @@ UIMnMain::UIMnMain(QWidget *parent):
     ui->setupUi(this);
     this->initForm();
 
-    S_MNSTATUS<<QString("UNLOAD")<<QString("LOADED")<<QString("DISABLE")<<QString("ENABLE");
+    S_MNSTATUS<<QString("UNLOAD")<<QString("UPLOADED")<<QString("STARTED")<<QString("NEW_START_REQUIRED")
+             <<QString("ENABLED")<<QString("EXPIRED")<<QString("MISSING");
 
     connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
+    connect(&mns, &CStartMasternode::sigMasternodeFinishStart, this, &UIMnMain::mnSetupComplete);
+
     qApp->setStyleSheet("QTableCornerButton::section{background-color:rgba(232,255,213,5);}");
 
     QFile file(":/images/s.qss");
@@ -73,10 +77,16 @@ UIMnMain::UIMnMain(QWidget *parent):
 
 void UIMnMain::ShowMasternodeStatusMessage()
 {
-    //ui->textEdit_log->append("show log:");
+    /*
     WalletRPC wallet(local_setting.remote_rpc_ip,
                      local_setting.remote_rpc_user,
                      local_setting.remote_rpc_pwd);
+
+    */
+
+    WalletRPC wallet("127.0.0.1",
+                     local_setting.local_rpc_user,
+                     local_setting.local_rpc_pwd);
 
     ui->textEdit_log->append("======================================================================");
     ui->textEdit_log->append("Masternode节点信息：");
@@ -243,7 +253,8 @@ void UIMnMain::initSetting()
                     QList<QByteArray> qList = mn_conf_line.split(' ');
                     if(qList.size() > 4)
                     {
-                        local_setting.mn_old_info[qList[3]] = qList[4];
+                        local_setting.mn_old_info[qList[3]] = qList[4]; // 保存hash与索引
+                        local_setting.mn_alias<<qList[0];  // 保存别名
                     }
                 }
                 else
@@ -266,6 +277,10 @@ void UIMnMain::initSetting()
 
 UIMnMain::~UIMnMain()
 {
+    if (mns.isRunning())
+    {
+        mns.terminate();
+    }
     delete ui;
 }
 
@@ -403,10 +418,17 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
 {
     mMasternodes.insert(pair<QString, CMasternode>(cmn.m_ip, cmn));
     mMasternodes[cmn.m_ip].m_status = S_MNSTATUS[UNLOAD];
-    insertTableWidgetItem(mMasternodes[cmn.m_ip]);
-    show_masternode(cmn);
+
+    //insertTableWidgetItem(mMasternodes[cmn.m_ip]);
+    show_masternode(mMasternodes[cmn.m_ip]);
+
+    // 设置按钮可以上传，不可添加,可以修改
     ui->pb_upload->setEnabled(true);
+    ui->pb_rechange->setEnabled(true);
+    ui->pb_add->setEnabled(false);
+
     current_ip = cmn.m_ip;
+    g_current_ip = cmn.m_ip;
 
     local_setting.remote_rpc_ip = cmn.m_remote_rpc_ip;
     local_setting.remote_rpc_user = cmn.m_remote_rpc_user;
@@ -414,34 +436,51 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
 
-    QByteArray tmp_array = CMasternode::Serializable(cmn);
-
+    QByteArray tmp_array = CMasternode::Serializable(mMasternodes[cmn.m_ip]);
     mydb.addMn(cmn.m_ip, tmp_array);
+}
 
-    QMap<QString, QByteArray> dataxx = mydb.queryData();
-    qDebug()<<"Table size: "<<dataxx.size();
-
+// Masternode节点完成安装
+void UIMnMain::mnSetupComplete()
+{
+    ui->pb_add->setEnabled(true);
+    qDebug()<< "Complete Install...";
 }
 
 void UIMnMain::show_masternode(const CMasternode &cmn)
 {
-    QString qsHtml = "<th>Masternoede Info</th>";
+    QString qsHtml = "<th>主节点信息</th>";
     qsHtml.append("<hr>");
     qsHtml.append("<table border='0.1' width='100%'>");
 
-    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("alias");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("别名");
     qsHtml.append("</td>");
     qsHtml.append("<td>");qsHtml.append(cmn.m_alias);
     qsHtml.append("</td>");qsHtml.append("</tr>");
 
-    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("vps ip");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("服务器");
     qsHtml.append("</td>");
     qsHtml.append("<td>");qsHtml.append(cmn.m_ip);
     qsHtml.append("</td>");qsHtml.append("</tr>");
 
-    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("status");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("端口");
     qsHtml.append("</td>");
-    qsHtml.append("<td>");qsHtml.append("UNLOAD");
+    qsHtml.append("<td>");qsHtml.append(QString::number(cmn.m_port));
+    qsHtml.append("</td>");qsHtml.append("</tr>");
+
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("交易哈希");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(cmn.m_clltrl_hash);
+    qsHtml.append("</td>");qsHtml.append("</tr>");
+
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("节点秘钥");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(cmn.m_mn_key);
+    qsHtml.append("</td>");qsHtml.append("</tr>");
+
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("状态");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(cmn.m_status);
     qsHtml.append("</td>");qsHtml.append("</tr>");
 
     qsHtml.append("</table>");
@@ -531,13 +570,21 @@ void UIMnMain::on_pb_upload_clicked()
          mn_libssh2 ssh2;
          ssh2.mn_init();
 
-         CMasternode cmd = mMasternodes[current_ip];
-         int nRc = ssh2.mn_login(cmd.m_ip.toStdString().c_str(),
-                       cmd.m_user.toStdString().c_str(),
-                       cmd.m_pwd.toStdString().c_str());
+         //CMasternode cmd = mMasternodes[current_ip];
+         CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(current_ip));
+
+         if(cmn.m_status == "")
+         {
+             // @TODO cannot find the data,重新操作
+             return;
+         }
+
+         int nRc = ssh2.mn_login(cmn.m_ip.toStdString().c_str(),
+                       cmn.m_user.toStdString().c_str(),
+                       cmn.m_pwd.toStdString().c_str());
          if (!nRc)
          {
-             nRc = ssh2.mn_scp_write(cmd.m_safe_conf_path.toStdString().c_str(),
+             nRc = ssh2.mn_scp_write(cmn.m_safe_conf_path.toStdString().c_str(),
                                (local_setting.new_safe_conf_files_path+current_ip)
                                      .toStdString().c_str());
              if (!nRc)
@@ -563,8 +610,6 @@ void UIMnMain::on_pb_upload_clicked()
              else
              {
                  qDebug("upload the install file failed.");
-                 qDebug()<<"localfile: " <<local_setting.local_script_path+local_setting.install_script;
-                 qDebug()<<"remotefile: " <<local_setting.remote_script_path+local_setting.install_script;
                  return;
              }
 
@@ -612,8 +657,20 @@ void UIMnMain::on_pb_upload_clicked()
                  qDebug("upload the stop file failed.");
                  return;
              }
+
+             ui->pb_start->setEnabled(true);
+
+             // 更新数据库里面的Masternode状态
+             cmn.m_status = "UPLOADED";
+             mMasternodes[cmn.m_ip].m_status = "UPLOADED";
+             mydb.updateMn(current_ip, CMasternode::Serializable(cmn));
+             show_masternode(cmn);
          }
-         ui->pb_start->setEnabled(true);
+         else
+         {
+             //@TODO show change dialog
+             // 登录失败,显示修改对话框，让用户修改参数
+         }
      }
      else
      {
@@ -625,13 +682,30 @@ void UIMnMain::on_pb_start_clicked()
 {
     if (current_ip != "")
     {
-        CMasternode cmd = mMasternodes[current_ip];
-        mns.set(cmd.m_ip,cmd.m_user,cmd.m_pwd);
+        //CMasternode cmd = mMasternodes[current_ip];
+
+        CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(current_ip));
+        mns.set(cmn.m_ip,cmn.m_user,cmn.m_pwd);
         mns.start();
-        timer->start(5000);
+        timer->start(10000);
+
+        // 让start按钮不能重复响应
+        ui->pb_start->setEnabled(false);
+        ui->pb_rechange->setEnabled(false);
+        cmn.m_status = "STARTING";
+        mMasternodes[cmn.m_ip].m_status = "STARTING";
+        mydb.updateMn(current_ip, CMasternode::Serializable(cmn));
+        show_masternode(cmn);
+
     }
     else
     {
         qDebug("nothing to upload .");
     }
+}
+
+void UIMnMain::on_pb_rechange_clicked()
+{
+    ChangeDialog cged;
+    cged.exec();
 }

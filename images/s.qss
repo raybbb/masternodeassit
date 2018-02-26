@@ -91,6 +91,7 @@ border-radius:3px;
 }
 
 .QPushButton,.QToolButton{
+font: bold 11px;
 border-style:none;
 border:1px solid #D4D0C8;
 color:#6F6F6F;
@@ -102,6 +103,10 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #EEEEEE,stop:1 
 
 .QPushButton:hover,.QToolButton:hover{
 background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #FCFCFC,stop:1 #F7F7F7);
+}
+
+.QPushButton:disabled{
+    background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #AAAAAA,stop:1 #E5E5E5);
 }
 
 .QPushButton:pressed,.QToolButton:pressed{
