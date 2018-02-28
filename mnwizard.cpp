@@ -56,6 +56,8 @@
 #include "walletrpc.h"
 #include "cregistry.h"
 
+#define _Debug
+
 //! [0] //! [1]
 MnWizard::MnWizard(QWidget *parent)
     : QWizard(parent)
@@ -145,11 +147,10 @@ void MnWizard::accept()
 
     QFile headerFile("./safeconf/" + QString(host));
 
-    if (!headerFile.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(0, QObject::tr("Masternode Wizard"),
-                             QObject::tr("Cannot write file %1:\n%2")
-                             .arg(headerFile.fileName())
-                             .arg(headerFile.errorString()));
+    if (!headerFile.open(QFile::WriteOnly | QFile::Text))
+    {
+        QMessageBox::warning(this,tr("提示"),
+                     tr("保存文件时出现错误，请查看safeconf目录否被占用"));
         return;
     }
 
@@ -163,18 +164,25 @@ void MnWizard::accept()
          QDir qDitMn;
          if (qDitMn.exists(qMnconf+"\\masternode.conf"))
          {
-             qDebug()<<"find masternode.conf...";
              QFile mnFile(qMnconf+"\\masternode.conf");
              if (!mnFile.open(QFile::Text | QFile::ReadWrite))
              {
-                 QMessageBox::warning(0, QObject::tr("Masternode Wizard"),
-                                      QObject::tr("Cannot write file %1:\n%2")
-                                      .arg(mnFile.fileName())
-                                      .arg(mnFile.errorString()));
+                 QMessageBox::warning(this,tr("提示"),
+                              tr("请查看masternode.conf是否存在，且未被其他程序占用。"));
                  return;
              }
 
-             blockmnconf += "\n";
+             QByteArray qbData = mnFile.readAll();
+
+             // 如果配置文件没有回车或者换行作为结尾，你们给他加一个。
+             if (qbData.size() > 0)
+             {
+                 if (qbData.at(qbData.size()-1) != '\n'
+                         && qbData.at(qbData.size()-1) != '\r' )
+                 {
+                     blockmnconf += "\n";
+                 }
+             }
 
              blockmnconf += QString(mnalias) + QString(" ") + QString(host)
                      + QString(":") + QString(port) + QString(" ");
@@ -189,15 +197,18 @@ void MnWizard::accept()
          }
          else
          {
-             qDebug()<<"can not find masternode.conf...";
+             //qDebug()<<"can not find masternode.conf...";
+             QMessageBox::warning(this,tr("提示"),
+                          tr("请查看masternode.conf是否存在,如果不存在请重启钱包，或者手动添加。"));
          }
     }
     else
     {
         qDebug()<<"Can not find masternode.conf...";
-        // @TODO show file dialog...
+        QMessageBox::warning(this,tr("提示"),
+                     tr("未能从注册表中获取masternode.conf文件的位置。"\
+                        "检查是否正确安装SAFE钱包。"));
     }
-
 
 //! [5]
     QDialog::accept();
@@ -269,6 +280,7 @@ void AddressPage::generateAddr()
     QString mn_alias = GenAddressLineEdit->text();
     if (mn_alias == "")
     {
+        QMessageBox::information(this,tr("提示"),tr("别名不能为空。"));
         return;
     }
 
@@ -276,8 +288,8 @@ void AddressPage::generateAddr()
     {
         // @todo show message to user
         qDebug("name is already in mansternodelist ");
-        QMessageBox::information(this,tr("Masternode Help"),
-                                 tr("设置的别名已经在主节点列表里存在，请修改别名避免冲突"));
+        QMessageBox::information(this,tr("提示"),
+                      tr("设置的别名已经在主节点列表里存在，请修改别名避免冲突"));
         GenAddressLineEdit->setFocus();
         return;
     }
@@ -292,7 +304,8 @@ void AddressPage::generateAddr()
     }
     else
     {
-        // @todo somethings;
+        QMessageBox::warning(this,tr("提示"),
+                     tr("调用RPC获取地址失败，请检查网络是否正确。"));
     }
 }
 
@@ -436,13 +449,12 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
                    "但必须确保桌面钱包处于运行状态。"));
     setPixmap(QWizard::LogoPixmap, QPixmap(":/images/safe_logo.png"));
 
-    //protectLable = new QLabel(tr("Get the Masternode key use cmd: \'masternode genkey\' under Debug console."));
-    protectLable = new QLabel(tr("生成Masternode 秘钥（没有花费能力，不会影响1000个SAFE的使用）."));
+    protectLable = new QLabel(tr("生成Masternode 秘钥（没有花费能力，"\
+                                 "不会影响1000个SAFE的使用）."));
     MasternodeKeyLabel = new QLabel(tr("&Masternode秘钥:"));
     MasternodeKeyLineEdit = new QLineEdit;
     MasternodeKeyLabel->setBuddy(MasternodeKeyLineEdit);
 
-    //includeBaseLable = new QLabel(tr("Get the Collateral Hash use cmd: \'masternode output\' under Debug console."));
     includeBaseLable = new QLabel(tr("获取1000个SAFE抵押的交易哈希"));
     CollateralHashLabel = new QLabel(tr("抵押交易哈希:"));
     CollateralHashComboBox = new QComboBox;
@@ -457,10 +469,11 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     connect(CollateralHashComboBox,
             &QComboBox::currentTextChanged,CollateralHashLineEdit,
             [=](){
-        CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
-        IndexLineEdit->setText("1");
-        qDebug()<<"hash:"<<CollateralHashComboBox->currentText();
-    });
+                    CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
+                    IndexLineEdit->setText(
+                                local_setting.mn_new_info[CollateralHashComboBox->currentText()]);
+                    qDebug()<<"hash:"<<CollateralHashComboBox->currentText();
+            });
 
     QGridLayout *layout = new QGridLayout;
     layout->setColumnMinimumWidth(0, 20);
@@ -473,13 +486,11 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
     layout->addWidget(IndexLable, 4, 1);
     layout->addWidget(IndexLineEdit, 4, 2);
 
-#define _Debug
 #ifdef _Debug
     registerField("masternodekey", MasternodeKeyLineEdit);
     registerField("collateralhash", CollateralHashLineEdit);
     registerField("collateralindex", IndexLineEdit);
-#elif
-
+#else
     registerField("masternodekey*", MasternodeKeyLineEdit);
     registerField("collateralhash*", CollateralHashLineEdit);
     registerField("collateralindex*", IndexLineEdit);
@@ -505,6 +516,8 @@ void MasternodeInfoPage::initializePage()
     else
     {
         // @todo something;
+        QMessageBox::warning(this,tr("提示"),
+                     tr("请检查网络是否正确，且RPC用户名和密码无误。"));
     }
 
     QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
@@ -526,10 +539,21 @@ void MasternodeInfoPage::initializePage()
             CollateralHashComboBox->addItem(it.key());
         }
         local_setting.mn_new_info[it.key()] = it.value().toString();
-
     }
 
+#ifdef _Debug
+    CollateralHashComboBox->addItem("Testhas 1");
+    local_setting.mn_new_info["Testhas 1"] ="250";
+    CollateralHashComboBox->addItem("Testhas 2");
+    local_setting.mn_new_info["Testhas 2"] = "251";
+    CollateralHashComboBox->addItem("Testhas 3");
+    local_setting.mn_new_info["Testhas 3"] = "252";
+#endif
+
     CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
+    IndexLineEdit->setText(local_setting.mn_new_info[
+                           CollateralHashComboBox->currentText()
+            ]);
 }
 //! [16]
 
@@ -551,18 +575,12 @@ OutputFilesPage::OutputFilesPage(QWidget *parent)
     registerField("safeconf*", SafeConfLineEdit);
     registerField("masternodeconf*", MasternodeConfLineEdit);
 
-    /*
-    uploadpushButton = new QPushButton;
-    uploadpushButton->setText("Upload");
-    */
-
     QGridLayout *layout = new QGridLayout;
     layout->addWidget(outputDirLabel, 0, 0);
     layout->addWidget(SafeConfLineEdit, 1, 0,1,3);
     layout->addWidget(headerLabel, 2, 0);
     layout->addWidget(MasternodeConfLineEdit, 3, 0,1,3);
 
-    //layout->addWidget(uploadpushButton, 4, 2);
     setLayout(layout);
 }
 
@@ -590,6 +608,8 @@ void OutputFilesPage::initializePage()
     else
     {
         //@TODO show file dialog user chonse
+        QMessageBox::warning(this,tr("提示"),
+                     tr("请查看masternode.conf是否存在,如果不存在请重启钱包，或者手动添加。"));
     }
 }
 //! [17]

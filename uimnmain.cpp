@@ -15,29 +15,12 @@
 #include <QMouseEvent>
 #include <QApplication>
 
-
 #ifdef Q_OS_WIN
     #pragma comment(lib, "user32.lib")
     #include <qt_windows.h>
 #endif
 
 QString ARR_MN_FILDNAME[] = {"编号","别名","地址","端口","状态"};
-
-void UIMnMain::mousePressEvent(QMouseEvent *event)
-{
-#ifdef Q_OS_WIN
-    if (ReleaseCapture())
-    {
-        QWidget *pWindow = this->window();
-        if (pWindow->isTopLevel())
-        {
-           SendMessage(HWND(pWindow->winId()), WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
-        }
-    }
-    event->ignore();
-    #else
-    #endif
-}
 
 UIMnMain::UIMnMain(QWidget *parent):
     QDialog(parent),
@@ -50,6 +33,7 @@ UIMnMain::UIMnMain(QWidget *parent):
              <<QString("ENABLED")<<QString("EXPIRED")<<QString("MISSING");
 
     connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
+    connect(&changedialog, &ChangeDialog::sigMasternodeChange, this, &UIMnMain::recvChangeMnInfo);
     connect(&mns, &CStartMasternode::sigMasternodeFinishStart, this, &UIMnMain::mnSetupComplete);
 
     qApp->setStyleSheet("QTableCornerButton::section{background-color:rgba(232,255,213,5);}");
@@ -73,6 +57,22 @@ UIMnMain::UIMnMain(QWidget *parent):
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(ShowInfoMessage()));
     connect(timer, SIGNAL(timeout()), this, SLOT(ShowMasternodeStatusMessage()));
+}
+
+void UIMnMain::mousePressEvent(QMouseEvent *event)
+{
+#ifdef Q_OS_WIN
+    if (ReleaseCapture())
+    {
+        QWidget *pWindow = this->window();
+        if (pWindow->isTopLevel())
+        {
+           SendMessage(HWND(pWindow->winId()), WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
+        }
+    }
+    event->ignore();
+    #else
+    #endif
 }
 
 void UIMnMain::ShowMasternodeStatusMessage()
@@ -175,12 +175,12 @@ void UIMnMain::initSetting()
 
     if(!CRegistry::readDataDir(local_setting.safe_conf_path))
     {
-        //@todo safe haven't install. or show dialg to selet path of safe data.
+        QMessageBox::warning(this,tr("提示"),
+                     tr("未能从注册表中获取钱包路径，请查看是否正确安装钱包。"));
         exit(0);
     }
 
     QString localSafeConfFile = local_setting.safe_conf_path + "/safe.conf";
-    qDebug()<< "*Local safe file: " << localSafeConfFile;
     QFile file(localSafeConfFile);
     if(file.exists())
     {
@@ -205,7 +205,6 @@ void UIMnMain::initSetting()
                         local_setting.local_rpc_user = safe_conf_line.mid(++begin,--end);
                         local_setting.local_rpc_user.replace("\r\n", "\0");
                         hasConfigRpc ++;
-                        qDebug()<< "user: "<<local_setting.local_rpc_user;
                     }
                 }
                 if (safe_conf_line.startsWith("rpcpassword"))
@@ -217,7 +216,6 @@ void UIMnMain::initSetting()
                         local_setting.local_rpc_pwd = safe_conf_line.mid(++begin,--end);
                         local_setting.local_rpc_pwd.replace("\r\n", "\0");
                         hasConfigRpc ++;
-                        qDebug()<< "pwd: "<<local_setting.local_rpc_pwd;
                     }
                 }
                 safe_conf_line =  file.readLine();
@@ -233,13 +231,12 @@ void UIMnMain::initSetting()
     }
     else
     {
-        qDebug()<<"文件不存在";
+        QMessageBox::warning(this,tr("提示"),tr("safe.conf 丢失。"));
     }
 
     local_setting.masternode_conf_file
             = local_setting.safe_conf_path + "/masternode.conf";
-    qDebug()<< "*Local masternode confi file: "
-            << local_setting.masternode_conf_file;
+
     QFile mnfile(local_setting.masternode_conf_file);
     if(mnfile.exists())
     {
@@ -265,12 +262,14 @@ void UIMnMain::initSetting()
         }
         else
         {
-            qDebug()<<"open failed!";
+            QMessageBox::information(this,tr("提示"),
+                         tr("打开masternode.conf配置文件失败，请检查改文件是否被占用。"));
         }
     }
     else
     {
-        qDebug()<<"文件不存在";
+        QMessageBox::information(this,tr("提示"),
+                     tr("未找到masternode.conf文件。"));
     }
 
 }
@@ -440,19 +439,39 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     mydb.addMn(cmn.m_ip, tmp_array);
 }
 
+void UIMnMain::recvChangeMnInfo(const CMasternode &cmn)
+{
+    if (g_current_ip != cmn.m_ip)
+    {
+        mydb.delMn(g_current_ip);
+        g_current_ip = cmn.m_ip;
+        current_ip = cmn.m_ip;
+        mydb.addMn(g_current_ip, CMasternode::Serializable(cmn));
+    }
+    else
+    {
+        mydb.updateMn(g_current_ip, CMasternode::Serializable(cmn));
+    }
+
+    // 修改后，变成可上传
+    ui->pb_upload->setEnabled(true);
+    show_masternode(cmn);
+}
+
 // Masternode节点完成安装
 void UIMnMain::mnSetupComplete()
 {
     ui->pb_add->setEnabled(true);
-    qDebug()<< "Complete Install...";
 }
 
 void UIMnMain::show_masternode(const CMasternode &cmn)
 {
     QString qsHtml = "<th>主节点信息</th>";
     qsHtml.append("<hr>");
-    qsHtml.append("<table border='0.1' width='100%'>");
 
+    //width="80%" border="1" cellspacing="50%" cellpadding="80"
+    //qsHtml.append("<table border='0.1' width='100%'>");
+    qsHtml.append("<table width='100%' border='0.3' cellspacing='50%' cellpadding='100%'>");
     qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("别名");
     qsHtml.append("</td>");
     qsHtml.append("<td>");qsHtml.append(cmn.m_alias);
@@ -503,7 +522,6 @@ void UIMnMain::on_btnMenu_Max_clicked()
         this->setGeometry(qApp->desktop()->availableGeometry());
         this->setProperty("canMove", false);
     }
-
     max = !max;
 }
 
@@ -517,7 +535,6 @@ void UIMnMain::on_pb_add_clicked()
     mnwizard.exec();
     mnwizard.restart();
 }
-
 
 void UIMnMain::on_tableWidget_itemClicked(QTableWidgetItem *item)
 {
@@ -576,6 +593,8 @@ void UIMnMain::on_pb_upload_clicked()
          if(cmn.m_status == "")
          {
              // @TODO cannot find the data,重新操作
+             QMessageBox::information(this,tr("提示"),
+                          tr("请检查masternode.db是否存在。"));
              return;
          }
 
@@ -593,7 +612,8 @@ void UIMnMain::on_pb_upload_clicked()
              }
              else
              {
-                 qDebug("upload the safe.conf file failed.");
+                 QMessageBox::information(this,tr("提示"),
+                              tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
 
@@ -609,7 +629,8 @@ void UIMnMain::on_pb_upload_clicked()
              }
              else
              {
-                 qDebug("upload the install file failed.");
+                 QMessageBox::information(this,tr("提示"),
+                              tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
 
@@ -624,7 +645,8 @@ void UIMnMain::on_pb_upload_clicked()
              }
              else
              {
-                 qDebug("upload the start file failed.");
+                 QMessageBox::information(this,tr("提示"),
+                              tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
              // @todo upload those script...
@@ -639,7 +661,8 @@ void UIMnMain::on_pb_upload_clicked()
              }
              else
              {
-                 qDebug("upload the restart file failed.");
+                 QMessageBox::information(this,tr("提示"),
+                              tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
              // @todo upload those script...
@@ -654,7 +677,8 @@ void UIMnMain::on_pb_upload_clicked()
              }
              else
              {
-                 qDebug("upload the stop file failed.");
+                 QMessageBox::information(this,tr("提示"),
+                              tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
 
@@ -669,12 +693,16 @@ void UIMnMain::on_pb_upload_clicked()
          else
          {
              //@TODO show change dialog
-             // 登录失败,显示修改对话框，让用户修改参数
+             QMessageBox::information(this,tr("提示"),
+                          tr("登录远程服务器失败，"\
+                             "请确认服务器IP、用户名和密码是否正确。"));
+             changedialog.exec();
          }
      }
      else
      {
-         qDebug("nothing to upload .");
+         QMessageBox::information(this,tr("提示"),
+                      tr("程序运行错误，未能找到当前IP"));
      }
 }
 
@@ -682,8 +710,6 @@ void UIMnMain::on_pb_start_clicked()
 {
     if (current_ip != "")
     {
-        //CMasternode cmd = mMasternodes[current_ip];
-
         CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(current_ip));
         mns.set(cmn.m_ip,cmn.m_user,cmn.m_pwd);
         mns.start();
@@ -696,16 +722,16 @@ void UIMnMain::on_pb_start_clicked()
         mMasternodes[cmn.m_ip].m_status = "STARTING";
         mydb.updateMn(current_ip, CMasternode::Serializable(cmn));
         show_masternode(cmn);
-
     }
     else
     {
-        qDebug("nothing to upload .");
+        QMessageBox::information(this,tr("提示"),
+                     tr("程序运行错误，未能找到当前IP"));
     }
 }
 
 void UIMnMain::on_pb_rechange_clicked()
 {
-    ChangeDialog cged;
-    cged.exec();
+    changedialog.exec();
+    changedialog.restart();
 }

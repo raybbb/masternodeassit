@@ -7,13 +7,14 @@
 #include "frametitlebar.h"
 #include "cmasternode.h"
 #include "mnwizard.h"
+#include "changedialog.h"
 #include "cstartmasternode.h"
 #include "database.h"
 
 using namespace std;
 
 namespace Ui {
-class UIMnMain;
+    class UIMnMain;
 }
 
 class UIMnMain : public QDialog
@@ -33,7 +34,6 @@ private:
     void removeTableWidgetItem(CMasternode cmn);
     void removeTableWidgetItem(int nIndex);
     void initSetting();
-
     void initDatabase();
 
 private:
@@ -41,6 +41,7 @@ private:
     bool max;
     QRect location;
     MnWizard mnwizard;
+    ChangeDialog changedialog;
     map<QString, CMasternode> mMasternodes;
     QString current_ip;
     CMasternode current_mn;
@@ -53,6 +54,7 @@ private slots:
     void initTableWidget();
     void buttonClick();
     void recvMnInfo(const CMasternode &cmn);
+    void recvChangeMnInfo(const CMasternode &cmn);
     void show_masternode(const CMasternode &cmn);
     void ShowInfoMessage();
     void ShowMasternodeStatusMessage();
