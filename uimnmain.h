@@ -14,18 +14,20 @@
 using namespace std;
 
 namespace Ui {
-    class UIMnMain;
+class UIMnMain;
 }
 
 class UIMnMain : public QDialog
 {
     Q_OBJECT
     typedef enum {UNLOAD=0,LOADED,DISABLE,ENABLE} E_MNSTATUS;
+    typedef enum {E_INFO=0, E_MESSAGE, E_ERROR} E_MESSAGE_LEVEL;
     QStringList S_MNSTATUS ;//("UNLOAD","LOADED","DISABLE");
 protected:
     // 进行鼠界面的拖动
     virtual void mousePressEvent(QMouseEvent *event);
 public:
+
     explicit UIMnMain(QWidget *parent = 0);
     ~UIMnMain();
 
@@ -59,6 +61,10 @@ private slots:
     void ShowInfoMessage();
     void ShowMasternodeStatusMessage();
     void mnSetupComplete();
+
+    void showProcessMessage(const QString &msg, E_MESSAGE_LEVEL ml=E_INFO);
+    void showLocalSetting();
+    void ShowMnToMessageBox(const CMasternode &cmn);
 
 private slots:
     void on_btnMenu_Min_clicked();

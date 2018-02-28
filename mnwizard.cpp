@@ -116,7 +116,7 @@ void MnWizard::accept()
     cmn.m_pwd = QString(pwd);
     cmn.m_remote_rpc_user = QString(rpcuser);
     cmn.m_remote_rpc_pwd = QString(rpcpwd);
-    cmn.m_remote_rpc_ip = QString(rpcip);
+    cmn.m_remote_rpc_ip = cmn.m_ip;
 
     cmn.m_mn_key = QString(mnkey);
     cmn.m_clltrl_hash = QString(mnclltrlh);
@@ -221,7 +221,7 @@ IntroPage::IntroPage(QWidget *parent)
     : QWizardPage(parent)
 {
     setTitle(tr("介绍"));
-    setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark1.png"));
+    setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/safe_banner.jpg"));
 
     label = new QLabel(tr("这个向导帮助用户配置Masternode的配置文件，会生成safe.conf和"
                           "masternode.conf。并帮助用户将文件放到合适的位置。免去繁琐的Linux"
@@ -305,7 +305,7 @@ void AddressPage::generateAddr()
     else
     {
         QMessageBox::warning(this,tr("提示"),
-                     tr("调用RPC获取地址失败，请检查网络是否正确。"));
+                     tr("调用RPC获取地址失败，请检查SAFE钱包程序是否已经打开。"));
     }
 }
 
@@ -517,7 +517,7 @@ void MasternodeInfoPage::initializePage()
     {
         // @todo something;
         QMessageBox::warning(this,tr("提示"),
-                     tr("请检查网络是否正确，且RPC用户名和密码无误。"));
+                     tr("请检查SAFE钱包程序是否已经打开。"));
     }
 
     QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
@@ -618,7 +618,7 @@ ConclusionPage::ConclusionPage(QWidget *parent)
     : QWizardPage(parent)
 {
     setTitle(tr("结 束"));
-    setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/watermark1.png"));
+    setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/safe_banner.jpg"));
 
     label = new QLabel;
     label->setWordWrap(true);

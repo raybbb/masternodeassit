@@ -32,5 +32,6 @@
         <file>images/safe_logo.jpg</file>
         <file>images/safe_logo.png</file>
         <file>images/s.qss</file>
+        <file>images/safe_banner.jpg</file>
     </qresource>
 </RCC>

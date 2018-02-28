@@ -50,6 +50,8 @@ UIMnMain::UIMnMain(QWidget *parent):
         qDebug("open file faild...");
     }
 
+    showProcessMessage("启动 SAFE MASTERNODE 搭建工具", E_MESSAGE);
+
     initTableWidget();
     initSetting();
     initDatabase();
@@ -180,10 +182,15 @@ void UIMnMain::initSetting()
         exit(0);
     }
 
-    QString localSafeConfFile = local_setting.safe_conf_path + "/safe.conf";
+    showProcessMessage(QString("钱包路径是 %1")
+                       .arg(local_setting.safe_conf_path), E_MESSAGE);
+    QString localSafeConfFile = local_setting.safe_conf_path + "\\safe.conf";
     QFile file(localSafeConfFile);
     if(file.exists())
     {
+        showProcessMessage(QString("配置文件 %1")
+                           .arg(localSafeConfFile), E_MESSAGE);
+
         int hasConfigRpc = 0;
         if(file.open(QIODevice::ReadWrite))
         {
@@ -205,6 +212,8 @@ void UIMnMain::initSetting()
                         local_setting.local_rpc_user = safe_conf_line.mid(++begin,--end);
                         local_setting.local_rpc_user.replace("\r\n", "\0");
                         hasConfigRpc ++;
+                        showProcessMessage(QString("RPC用户名 %1")
+                                           .arg(local_setting.local_rpc_user), E_MESSAGE);
                     }
                 }
                 if (safe_conf_line.startsWith("rpcpassword"))
@@ -216,6 +225,8 @@ void UIMnMain::initSetting()
                         local_setting.local_rpc_pwd = safe_conf_line.mid(++begin,--end);
                         local_setting.local_rpc_pwd.replace("\r\n", "\0");
                         hasConfigRpc ++;
+                        showProcessMessage(QString("RPC密码 %1")
+                                           .arg(local_setting.local_rpc_pwd), E_MESSAGE);
                     }
                 }
                 safe_conf_line =  file.readLine();
@@ -225,6 +236,7 @@ void UIMnMain::initSetting()
 
         if(hasConfigRpc != 2)
         {
+            showProcessMessage("没有检查到RPC的相关配置", E_ERROR);
             LocalrpcDialog llrpc;
             llrpc.exec();
         }
@@ -435,6 +447,8 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
 
+    showLocalSetting();
+
     QByteArray tmp_array = CMasternode::Serializable(mMasternodes[cmn.m_ip]);
     mydb.addMn(cmn.m_ip, tmp_array);
 }
@@ -464,14 +478,132 @@ void UIMnMain::mnSetupComplete()
     ui->pb_add->setEnabled(true);
 }
 
+void UIMnMain::showProcessMessage(const QString &msg, E_MESSAGE_LEVEL ml)
+{
+    QString qtime = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    switch(ml)
+    {
+    case E_MESSAGE:
+        ui->textEdit_log->append("<div style='color:#008000'>"+ qtime + "  [MSG]"
+                                 + "</div>" + "  "
+                                 + "<h style='color:#3CB371'>" + msg + "</h>");
+        break;
+    case E_ERROR:
+        ui->textEdit_log->append("<div style='color:#FF0000'>"+ qtime  + "  [ERR]"
+                                 + "</div>" + "  "
+                                 + "<h style='color:#FF0000'>" + msg + "</h>");
+        break;
+    case E_INFO:
+        ui->textEdit_log->append("<div style='color:#008000'>"+ qtime + " [INFO]"
+                                 + "</div>" + "  "
+                                 + "<h style='color:#D3D3D3'>" + msg + "</h>");
+    break;
+    default:
+        break;
+    }
+
+    QTextCursor cursor = ui->textEdit_log->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    ui->textEdit_log->setTextCursor(cursor);
+
+}
+
+void UIMnMain::showLocalSetting()
+{
+    QString qsHtml = "本地配置信息";
+    qsHtml.append("<hr>");
+    qsHtml.append("<table width='80%' border='0.1' cellspacing='50%' cellpadding='100%'>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("钱包目录");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.safe_conf_path);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("SAFE配置文件");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.safe_conf_file);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("临时SAFE配置文件");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.new_safe_conf_files_path);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("Masternode配置文件");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.safe_conf_path);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("本地RPC用户名称");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.local_rpc_user);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("本地RPC用户密码");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.local_rpc_pwd);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("远程RPC用户名称");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.remote_rpc_user);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("远程RPC用户密码");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.remote_rpc_pwd);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("远程RPC IP");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.remote_rpc_ip);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("本地脚本目录");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.local_script_path);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("远程脚本目录");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.remote_script_path);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("安装脚本");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.install_script);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("启动脚本");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.start_script);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("重启脚本");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.restart_script);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+    qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("停止脚本");
+    qsHtml.append("</td>");
+    qsHtml.append("<td>");qsHtml.append(local_setting.stop_script);
+    qsHtml.append("</td>");
+    qsHtml.append("</tr>");
+
+    qsHtml.append("</table>");
+    showProcessMessage(qsHtml, E_MESSAGE);
+}
+
+void UIMnMain::ShowMnToMessageBox(const CMasternode &cmn)
+{
+
+}
+
+
 void UIMnMain::show_masternode(const CMasternode &cmn)
 {
-    QString qsHtml = "<th>主节点信息</th>";
+    QString qsHtml = "主节点信息";
     qsHtml.append("<hr>");
-
-    //width="80%" border="1" cellspacing="50%" cellpadding="80"
-    //qsHtml.append("<table border='0.1' width='100%'>");
-    qsHtml.append("<table width='100%' border='0.3' cellspacing='50%' cellpadding='100%'>");
+    qsHtml.append("<table width='100%' border='0.1' cellspacing='50%' cellpadding='100%'>");
     qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("别名");
     qsHtml.append("</td>");
     qsHtml.append("<td>");qsHtml.append(cmn.m_alias);
@@ -503,8 +635,9 @@ void UIMnMain::show_masternode(const CMasternode &cmn)
     qsHtml.append("</td>");qsHtml.append("</tr>");
 
     qsHtml.append("</table>");
-    //qDebug(qsHtml.toStdString().c_str());
     ui->textEdit->setHtml(qsHtml);
+
+    showProcessMessage(qsHtml, E_MESSAGE);
 }
 
 void UIMnMain::on_btnMenu_Min_clicked()
