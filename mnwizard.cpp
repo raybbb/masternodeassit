@@ -260,7 +260,7 @@ AddressPage::AddressPage(QWidget *parent)
     copypushButton = new QPushButton("拷贝");
     connect(copypushButton, &QPushButton::clicked, this, &AddressPage::copy);
 
-    registerField("mnalias", GenAddressLineEdit);
+    registerField("mnalias*", GenAddressLineEdit);
     registerField("address", AddressLineEdit);
 
     QGridLayout *qh1 = new QGridLayout;
