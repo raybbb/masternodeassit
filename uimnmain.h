@@ -21,7 +21,6 @@ class UIMnMain : public QDialog
 {
     Q_OBJECT
     //typedef enum {UNLOAD=0,LOADED,DISABLE,ENABLE} E_MNSTATUS;
-    typedef enum {UNLOAD=0,UPLOADED,STARTING} E_STATUS;
     typedef enum {E_INFO=0, E_MESSAGE, E_ERROR} E_MESSAGE_LEVEL;
 protected:
     // 进行鼠界面的拖动

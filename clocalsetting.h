@@ -2,7 +2,7 @@
 #define CLOCALSETTING_H
 #include <QString>
 #include <QStringList>
-
+#include <QMap>
 #include <map>
 using namespace std;
 
@@ -31,10 +31,12 @@ public:
     QStringList  mn_alias;  // 保存别名，防止别名冲突在钱包中不显示
 };
 
+typedef enum {UNLOAD=0,UPLOADED,STARTING,STARTED} E_STATUS;
 
 extern CLocalSetting local_setting;
 extern QString g_current_ip;
 extern QString g_current_tx_hash;
 extern QString MNSTATUS[];
+extern QMap<QString, E_STATUS> M_STATUS;
 
 #endif // CLOCALSETTING_H

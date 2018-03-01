@@ -74,76 +74,6 @@ void UIMnMain::mousePressEvent(QMouseEvent *event)
     #endif
 }
 
-void UIMnMain::ShowMasternodeStatusMessage()
-{
-
-    WalletRPC wallet(local_setting.remote_rpc_ip,
-                     local_setting.remote_rpc_user,
-                     local_setting.remote_rpc_pwd);
-
-    QJsonObject qjObj = wallet.masternodeStatus();
-
-    if(qjObj.size() > 0)
-    {
-        for (QJsonObject::Iterator it = qjObj.begin();
-             it!=qjObj.end();it++)
-        {
-            qDebug()<<"key:"<<it.key() << ": " <<it.value();
-
-            if (it.value().isDouble())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   + QString("%1").arg(QString::number(it.value().toDouble())));
-            }
-            else if (it.value().isString())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   +it.value().toString());
-            }
-        }
-    }
-    else
-    {
-        //ui->textEdit_log->append("无~");
-    }
-
-}
-
-void UIMnMain::ShowInfoMessage()
-{
-    WalletRPC wallet(local_setting.remote_rpc_ip,
-                     local_setting.remote_rpc_user,
-                     local_setting.remote_rpc_pwd);
-
-    QJsonObject qjObj = wallet.getinfo();
-
-    if (qjObj.size()>0)
-    {
-        for (QJsonObject::Iterator it = qjObj.begin();
-             it!=qjObj.end();it++)
-        {
-            qDebug()<<"key:"<<it.key() << ": " <<it.value();
-
-            if (it.value().isDouble())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   + QString("%1").arg(QString::number(it.value().toDouble())));
-
-            }
-            else if (it.value().isString())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   +it.value().toString());
-            }
-        }
-    }
-    else
-    {
-         ui->textEdit_log->append("无~");
-    }
-}
-
-
 void UIMnMain::initDatabase()
 {
     mydb.createMnTable();
@@ -151,6 +81,11 @@ void UIMnMain::initDatabase()
 
 void UIMnMain::initSetting()
 {
+    M_STATUS["UNLOAD"] = UNLOAD;
+    M_STATUS["UPLOADED"] = UPLOADED;
+    M_STATUS["STARTING"] = STARTING;
+    M_STATUS["STARTED"] = STARTED;
+
     //@todo read rpc from /safe.conf
     local_setting.new_safe_conf_files_path = "./safeconf/";
     local_setting.local_script_path = "./script/";
@@ -349,6 +284,75 @@ void UIMnMain::initForm()
         btn->setMaximumHeight(80);
         btn->setCheckable(true);
         connect(btn, SIGNAL(clicked(bool)), this, SLOT(buttonClick()));
+    }
+}
+
+void UIMnMain::ShowMasternodeStatusMessage()
+{
+
+    WalletRPC wallet(local_setting.remote_rpc_ip,
+                     local_setting.remote_rpc_user,
+                     local_setting.remote_rpc_pwd);
+
+    QJsonObject qjObj = wallet.masternodeStatus();
+
+    if(qjObj.size() > 0)
+    {
+        for (QJsonObject::Iterator it = qjObj.begin();
+             it!=qjObj.end();it++)
+        {
+            qDebug()<<"key:"<<it.key() << ": " <<it.value();
+
+            if (it.value().isDouble())
+            {
+                showProcessMessage("\t" + it.key()+" : "
+                                   + QString("%1").arg(QString::number(it.value().toDouble())));
+            }
+            else if (it.value().isString())
+            {
+                showProcessMessage("\t" + it.key()+" : "
+                                   +it.value().toString());
+            }
+        }
+    }
+    else
+    {
+        //ui->textEdit_log->append("无~");
+    }
+
+}
+
+void UIMnMain::ShowInfoMessage()
+{
+    WalletRPC wallet(local_setting.remote_rpc_ip,
+                     local_setting.remote_rpc_user,
+                     local_setting.remote_rpc_pwd);
+
+    QJsonObject qjObj = wallet.getinfo();
+
+    if (qjObj.size()>0)
+    {
+        for (QJsonObject::Iterator it = qjObj.begin();
+             it!=qjObj.end();it++)
+        {
+            qDebug()<<"key:"<<it.key() << ": " <<it.value();
+
+            if (it.value().isDouble())
+            {
+                showProcessMessage("\t" + it.key()+" : "
+                                   + QString("%1").arg(QString::number(it.value().toDouble())));
+
+            }
+            else if (it.value().isString())
+            {
+                showProcessMessage("\t" + it.key()+" : "
+                                   +it.value().toString());
+            }
+        }
+    }
+    else
+    {
+         ui->textEdit_log->append("无~");
     }
 }
 

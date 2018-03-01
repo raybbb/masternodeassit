@@ -55,6 +55,7 @@
 #include "mnwizard.h"
 #include "walletrpc.h"
 #include "cregistry.h"
+#include "database.h"
 
 #define _Debug
 
@@ -250,8 +251,19 @@ AddressPage::AddressPage(QWidget *parent)
     GencopypushButton = new QPushButton("生成地址");
     connect(GencopypushButton, &QPushButton::clicked,
             this, &AddressPage::generateAddr);
+    connect(GenAddressLineEdit,
+            &QLineEdit::editingFinished,this,
+            [=](){
+                if (local_setting.mn_alias.contains(GenAddressLineEdit->text()))
+                {
+                    qDebug("name is already in mansternodelist ");
+                    QMessageBox::information(this,tr("提示"),
+                                  tr("设置的别名已经在主节点列表里存在，请修改别名避免冲突"));
+                    GenAddressLineEdit->setFocus();
+                    return;
+                }
+            });
 
-    //@todo 已经打过1000个safe,中断操作后，怎么继续？
     AddressLabel = new QLabel(tr("SAFE接收地址，先将1000个SAFE打到这个地址"));
     QLabel *aLabel  = new QLabel(tr("（如有可用的抵押交易，可跳过汇款）"));
     AddressLineEdit = new QLineEdit();
@@ -284,9 +296,8 @@ void AddressPage::generateAddr()
         return;
     }
 
-    if (local_setting.mn_alias.contains(mn_alias))
+    if (false && local_setting.mn_alias.contains(mn_alias))
     {
-        // @todo show message to user
         qDebug("name is already in mansternodelist ");
         QMessageBox::information(this,tr("提示"),
                       tr("设置的别名已经在主节点列表里存在，请修改别名避免冲突"));
@@ -522,8 +533,9 @@ void MasternodeInfoPage::initializePage()
 
     QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
 
+    Database mydb;
     for (QJsonObject::Iterator it = qjsonOutput.begin();
-         it!=qjsonOutput.end();it++)
+         it!=qjsonOutput.end(); it++)
     {
         qDebug()<<"key:"<<it.key();
         qDebug()<<"value:"<<it.value().toString();
@@ -532,22 +544,50 @@ void MasternodeInfoPage::initializePage()
                 != local_setting.mn_old_info.end())
         {
             qDebug()<<"old key:"<<it.key();
+            /*
+             *  老Hash，
+             * 1 如果我们数据库中没有，用户手动添加的，不给用户展示
+             * 2 如果数据库中有，状态是 < starting, 说明是中断的，
+             * 需要重新添加.如果状态 是started说明是工具添加，已经完成。
+             * 不需要展示（特殊情况用户手动从masternode.conf删掉）
+             * */
+
+            QByteArray data = mydb.queryData(it.key());
+            if (data != "")
+            {
+                CMasternode cmn = CMasternode::DeSerializable(data);
+                if(M_STATUS[cmn.m_status] < STARTED)
+                {
+                    qDebug()<< "is interupt...";
+                    CollateralHashComboBox->addItem(it.key());
+                }
+            }
         }
         else
         {
-            qDebug()<<"new key:"<<it.key();
-            CollateralHashComboBox->addItem(it.key());
+            // 新Hash，说明： 1 全新的交易； 2 用户手动删掉的
+            QByteArray data = mydb.queryData(g_current_tx_hash);
+            if (data != "")
+            {
+                //再数据库中有，说明是用户手动删的，那么不需要再操作
+                continue;
+            }
+            else
+            {
+                // 全新的交易
+                CollateralHashComboBox->addItem(it.key());
+            }
         }
         local_setting.mn_new_info[it.key()] = it.value().toString();
     }
 
 #ifdef _Debug
-    CollateralHashComboBox->addItem("Testhas 1");
-    local_setting.mn_new_info["Testhas 1"] ="250";
-    CollateralHashComboBox->addItem("Testhas 2");
-    local_setting.mn_new_info["Testhas 2"] = "251";
-    CollateralHashComboBox->addItem("Testhas 3");
-    local_setting.mn_new_info["Testhas 3"] = "252";
+    CollateralHashComboBox->addItem("779bea4bef5f309f4cd3803a01af959564adafb103f4519880d0eabc9829fd00");
+    local_setting.mn_new_info["779bea4bef5f309f4cd3803a01af959564adafb103f4519880d0eabc9829fd00"] ="250";
+    CollateralHashComboBox->addItem("Testhas2");
+    local_setting.mn_new_info["Testhas2"] = "251";
+    CollateralHashComboBox->addItem("Testhas3");
+    local_setting.mn_new_info["Testhas3"] = "252";
 #endif
 
     CollateralHashLineEdit->setText(CollateralHashComboBox->currentText());
