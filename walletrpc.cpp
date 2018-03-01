@@ -33,7 +33,6 @@ QJsonValue WalletRPC::execCmd(QByteArray array)
     eventLoop.exec();       //block until finish
 
     QByteArray responseData(reply->readAll());
-    qDebug() << responseData;
 
     return parseResponse(responseData);
 }
@@ -65,6 +64,10 @@ QJsonValue WalletRPC::parseResponse(QByteArray &responseData)
                 }
             }
         }
+        else
+        {
+            qDebug()<<"is not object: " << QString(json.toJson());
+        }
     }
     else
     {
@@ -84,14 +87,10 @@ QJsonObject WalletRPC::getinfo()
     if (retData.isObject())
     {
         subObj = retData.toObject();
-        /*
-        if (subObj.contains("blocks"))
-        {
-            QJsonValue value;
-            value = subObj.value("blocks");
-            qDebug() << value.toInt();
-        }
-        */
+    }
+    else
+    {
+        subObj.insert("Info", retData);
     }
     return subObj;
 }
@@ -133,6 +132,10 @@ QJsonObject WalletRPC::masternodeStatus()
     if (retData.isObject())
     {
         subObj = retData.toObject();
+    }
+    else
+    {
+        //qDebug()<< "!!! is not object";
     }
 
     return subObj;

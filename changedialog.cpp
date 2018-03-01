@@ -120,10 +120,21 @@ void ChangeDialog::accept()
     Database mydb;
     CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_ip));
 
+    if(QString(mn_user).compare("root",Qt::CaseInsensitive))
+    {
+        cmn.m_safe_conf_path =  QString("/home/")+QString(mn_user)+QString("/safe.conf");
+        local_setting.remote_script_path = QString("/home/")+mn_user+QString("/");
+    }
+    else
+    {
+        cmn.m_safe_conf_path = QString("/")+QString(mn_user)+QString("/safe.conf");
+        local_setting.remote_script_path = QString("/") + mn_user+QString("/");
+    }
+
     // 修改safe.conf
     blocksafeconf += "rpcuser=" + cmn.m_remote_rpc_user + "\n";
     blocksafeconf += "rpcpassword=" + cmn.m_remote_rpc_pwd + "\n";
-    blocksafeconf += "rpcallowip=" + cmn.m_remote_rpc_ip + "\n";
+    blocksafeconf += "rpcallowip=0.0.0.0/0\n";
     blocksafeconf += "listen=1\n"\
                      "server=1\n"\
                      "daemon=1\n"\

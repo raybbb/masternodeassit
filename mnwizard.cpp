@@ -128,7 +128,7 @@ void MnWizard::accept()
 
     blocksafeconf += "rpcuser=" + rpcuser + "\n";
     blocksafeconf += "rpcpassword=" + rpcpwd + "\n";
-    blocksafeconf += "rpcallowip=" + rpcip + "\n";
+    blocksafeconf += "rpcallowip=0.0.0.0/0\n";
     blocksafeconf += "listen=1\n"\
                        "server=1\n"\
                        "daemon=1\n"\
@@ -588,6 +588,7 @@ OutputFilesPage::OutputFilesPage(QWidget *parent)
 void OutputFilesPage::initializePage()
 {
     QString userName = field("user").toString();
+    SafeConfLineEdit->setEnabled(false);
     if(userName.compare("root",Qt::CaseInsensitive))
     {
         SafeConfLineEdit->setText(QString("/home/")+userName+QString("/safe.conf"));
@@ -600,6 +601,7 @@ void OutputFilesPage::initializePage()
     }
 
     QString qMnconf = "";
+    MasternodeConfLineEdit->setEnabled(false);
     if(CRegistry::readDataDir(qMnconf))
     {
         qMnconf += "\\masternode.conf";

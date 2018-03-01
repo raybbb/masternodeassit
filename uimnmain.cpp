@@ -79,22 +79,12 @@ void UIMnMain::mousePressEvent(QMouseEvent *event)
 
 void UIMnMain::ShowMasternodeStatusMessage()
 {
-    /*
+
     WalletRPC wallet(local_setting.remote_rpc_ip,
                      local_setting.remote_rpc_user,
                      local_setting.remote_rpc_pwd);
 
-    */
-
-    WalletRPC wallet("127.0.0.1",
-                     local_setting.local_rpc_user,
-                     local_setting.local_rpc_pwd);
-
-    ui->textEdit_log->append("======================================================================");
-    ui->textEdit_log->append("Masternode节点信息：");
-
     QJsonObject qjObj = wallet.masternodeStatus();
-    //QJsonObject qjObj = wallet.getinfo();
 
     if(qjObj.size() > 0)
     {
@@ -105,33 +95,36 @@ void UIMnMain::ShowMasternodeStatusMessage()
 
             if (it.value().isDouble())
             {
-                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-                                         +"\t" + it.key()+" : "+ QString("%1").arg(it.value().toDouble()) );
+                showProcessMessage("\t" + it.key()+" : "
+                                   + QString("%1").arg(QString::number(it.value().toDouble())));
             }
             else if (it.value().isString())
             {
-                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-                                         +"\t" + it.key()+" : "+it.value().toString());
+                showProcessMessage("\t" + it.key()+" : "
+                                   +it.value().toString());
             }
         }
     }
     else
     {
-        ui->textEdit_log->append("无~");
+        //ui->textEdit_log->append("无~");
     }
 
 }
 
 void UIMnMain::ShowInfoMessage()
 {
+    /*
     WalletRPC wallet("127.0.0.1",
                      local_setting.local_rpc_user,
                      local_setting.local_rpc_pwd);
+                     */
+    WalletRPC wallet(local_setting.remote_rpc_ip,
+                     local_setting.remote_rpc_user,
+                     local_setting.remote_rpc_pwd);
 
     QJsonObject qjObj = wallet.getinfo();
 
-    ui->textEdit_log->append("======================================================================");
-    ui->textEdit_log->append("区块信息：");
     if (qjObj.size()>0)
     {
         for (QJsonObject::Iterator it = qjObj.begin();
@@ -141,13 +134,14 @@ void UIMnMain::ShowInfoMessage()
 
             if (it.value().isDouble())
             {
-                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-                                         +"\t" + it.key()+" : "+ QString("%1").arg(it.value().toDouble()) );
+                showProcessMessage("\t" + it.key()+" : "
+                                   + QString("%1").arg(QString::number(it.value().toDouble())));
+
             }
             else if (it.value().isString())
             {
-                ui->textEdit_log->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-                                         +"\t" + it.key()+" : "+it.value().toString());
+                showProcessMessage("\t" + it.key()+" : "
+                                   +it.value().toString());
             }
         }
     }
@@ -155,8 +149,6 @@ void UIMnMain::ShowInfoMessage()
     {
          ui->textEdit_log->append("无~");
     }
-
-    //ui->textEdit_log->append("======================================================================");
 }
 
 
@@ -447,7 +439,7 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
 
-    showLocalSetting();
+    //showLocalSetting();
 
     QByteArray tmp_array = CMasternode::Serializable(mMasternodes[cmn.m_ip]);
     mydb.addMn(cmn.m_ip, tmp_array);
@@ -496,7 +488,7 @@ void UIMnMain::showProcessMessage(const QString &msg, E_MESSAGE_LEVEL ml)
     case E_INFO:
         ui->textEdit_log->append("<div style='color:#008000'>"+ qtime + " [INFO]"
                                  + "</div>" + "  "
-                                 + "<h style='color:#D3D3D3'>" + msg + "</h>");
+                                 + "<h style='color:#B3B3B3'>" + msg + "</h>");
     break;
     default:
         break;
@@ -603,7 +595,7 @@ void UIMnMain::show_masternode(const CMasternode &cmn)
 {
     QString qsHtml = "主节点信息";
     qsHtml.append("<hr>");
-    qsHtml.append("<table width='100%' border='0.1' cellspacing='50%' cellpadding='100%'>");
+    qsHtml.append("<table width='80%' border='0.1' cellspacing='50%' cellpadding='100%'>");
     qsHtml.append("<tr>");qsHtml.append("<td>");qsHtml.append("别名");
     qsHtml.append("</td>");
     qsHtml.append("<td>");qsHtml.append(cmn.m_alias);
@@ -637,7 +629,7 @@ void UIMnMain::show_masternode(const CMasternode &cmn)
     qsHtml.append("</table>");
     ui->textEdit->setHtml(qsHtml);
 
-    showProcessMessage(qsHtml, E_MESSAGE);
+   // showProcessMessage(qsHtml, E_MESSAGE);
 }
 
 void UIMnMain::on_btnMenu_Min_clicked()
@@ -736,19 +728,29 @@ void UIMnMain::on_pb_upload_clicked()
                        cmn.m_pwd.toStdString().c_str());
          if (!nRc)
          {
+             showProcessMessage(QString("将配置文件%1 上传到服务器 %2")
+                                .arg(local_setting.new_safe_conf_files_path+current_ip)
+                                .arg(cmn.m_safe_conf_path.toStdString().c_str()));
+
              nRc = ssh2.mn_scp_write(cmn.m_safe_conf_path.toStdString().c_str(),
                                (local_setting.new_safe_conf_files_path+current_ip)
                                      .toStdString().c_str());
              if (!nRc)
              {
+                 showProcessMessage(QString("safe.conf文件上传成功！"));
                  qDebug("upload the safe.conf file success.");
              }
              else
              {
+                 showProcessMessage(QString("safe.conf文件上传失败！"), E_ERROR);
                  QMessageBox::information(this,tr("提示"),
                               tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
+
+             showProcessMessage(QString("将启动文件%1 上传到服务器 %2")
+                                .arg(local_setting.local_script_path+local_setting.install_script)
+                                .arg(local_setting.remote_script_path+local_setting.install_script));
 
              // @todo upload those script...
              nRc = ssh2.mn_scp_write(
@@ -758,14 +760,22 @@ void UIMnMain::on_pb_upload_clicked()
                          .toStdString().c_str());
              if (!nRc)
              {
+                 showProcessMessage(QString("%1文件上传成功！")
+                                    .arg(local_setting.install_script));
                  qDebug("upload the install file success.");
              }
              else
              {
+                 showProcessMessage(QString("%1文件上传失败！")
+                                    .arg(local_setting.install_script), E_ERROR);
                  QMessageBox::information(this,tr("提示"),
                               tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
+
+             showProcessMessage(QString("将启动文件%1 上传到服务器 %2")
+                                .arg(local_setting.local_script_path+local_setting.start_script)
+                                .arg(local_setting.remote_script_path+local_setting.start_script));
 
              nRc = ssh2.mn_scp_write(
                          (local_setting.remote_script_path+local_setting.start_script)
@@ -774,14 +784,23 @@ void UIMnMain::on_pb_upload_clicked()
                          .toStdString().c_str());
              if (!nRc)
              {
+                 showProcessMessage(QString("%1文件上传成功！")
+                                    .arg(local_setting.start_script));
                  qDebug("upload the start file success.");
              }
              else
              {
+                 showProcessMessage(QString("%1文件上传失败！")
+                                    .arg(local_setting.start_script), E_ERROR);
                  QMessageBox::information(this,tr("提示"),
                               tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
+
+             showProcessMessage(QString("将启动文件%1 上传到服务器 %2")
+                                .arg(local_setting.local_script_path+local_setting.restart_script)
+                                .arg(local_setting.remote_script_path+local_setting.restart_script));
+
              // @todo upload those script...
              nRc = ssh2.mn_scp_write(
                          (local_setting.remote_script_path+local_setting.restart_script)
@@ -790,14 +809,22 @@ void UIMnMain::on_pb_upload_clicked()
                          .toStdString().c_str());
              if (!nRc)
              {
+                 showProcessMessage(QString("%1文件上传成功！")
+                                    .arg(local_setting.restart_script));
                  qDebug("upload the restart file success.");
              }
              else
              {
+                 showProcessMessage(QString("%1文件上传失败！")
+                                    .arg(local_setting.restart_script), E_ERROR);
                  QMessageBox::information(this,tr("提示"),
                               tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
+
+             showProcessMessage(QString("将启动文件%1 上传到服务器 %2")
+                                .arg(local_setting.local_script_path+local_setting.stop_script)
+                                .arg(local_setting.remote_script_path+local_setting.stop_script));
              // @todo upload those script...
              nRc = ssh2.mn_scp_write(
                          (local_setting.remote_script_path+local_setting.stop_script)
@@ -806,14 +833,21 @@ void UIMnMain::on_pb_upload_clicked()
                          .toStdString().c_str());
              if (!nRc)
              {
+                 showProcessMessage(QString("%1文件上传成功！")
+                                    .arg(local_setting.stop_script));
                  qDebug("upload the stop file success.");
              }
              else
              {
+                 showProcessMessage(QString("%1文件上传失败！")
+                                    .arg(local_setting.stop_script), E_ERROR);
                  QMessageBox::information(this,tr("提示"),
                               tr("上传配置文件到服务器失败，详情查看日志。"));
                  return;
              }
+
+             showProcessMessage(QString("安装需要的脚本上传成功，可以进行安装。")
+                                .arg(local_setting.stop_script));
 
              ui->pb_start->setEnabled(true);
 
@@ -825,7 +859,11 @@ void UIMnMain::on_pb_upload_clicked()
          }
          else
          {
-             //@TODO show change dialog
+             showProcessMessage(
+                         QString("登陆失败，检查远程服务器:%1，用户名:%2,密码:%3填写是否正确;"
+                                "确认服务器是否启用SSH; 网络是否正常;")
+                         .arg(cmn.m_ip).arg(cmn.m_user).arg(cmn.m_pwd),
+                         E_ERROR);
              QMessageBox::information(this,tr("提示"),
                           tr("登录远程服务器失败，"\
                              "请确认服务器IP、用户名和密码是否正确。"));
@@ -854,6 +892,10 @@ void UIMnMain::on_pb_start_clicked()
         cmn.m_status = "STARTING";
         mMasternodes[cmn.m_ip].m_status = "STARTING";
         mydb.updateMn(current_ip, CMasternode::Serializable(cmn));
+
+        showProcessMessage(QString("安装Masternode节点，"
+                                   "预计需要等待1，2个小时，请耐心等待..."));
+
         show_masternode(cmn);
     }
     else
