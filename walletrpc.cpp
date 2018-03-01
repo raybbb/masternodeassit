@@ -58,9 +58,9 @@ QJsonValue WalletRPC::parseResponse(QByteArray &responseData)
                 else
                 {
                     qDebug() << "parseResponse get result error!";
-                    respObj.value("error");
-                    QJsonObject subObj = respObj.value("error").toObject();
-                    qDebug() << subObj.value("message");
+                    value = respObj.value("error");
+                    //QJsonObject subObj = respObj.value("error").toObject();
+                    //qDebug() << subObj.value("message");
                 }
             }
         }
@@ -122,7 +122,7 @@ void WalletRPC::masternodeStop()
 QJsonObject WalletRPC::masternodeStatus()
 {
     qDebug() << "masternodeStatus";
-    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"debug\"]}");
+    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"masternode\", \"params\": [\"status\"]}");
     QJsonValue retData = execCmd(array);
     QJsonObject subObj;
 
