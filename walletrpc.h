@@ -14,6 +14,7 @@ public:
 
     QJsonObject getinfo();
     QString masternodeGenkey();
+    QString getblockcount();
     QString getaccountaddress(QString label);
     //void masternodeStop();
     QJsonObject masternodeStatus();
