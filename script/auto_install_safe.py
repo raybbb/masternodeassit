@@ -3,11 +3,19 @@
 # updatetime:2018年1月25日 22:08:00
 # 功能：自动安装safed...
 
+import os
 import subprocess
 
 
 def main():
     print '-------- start to install safe -----------'
+
+    safe_home = '~/.safe'
+    find_safe_file = os.path.exists(safe_home)
+    if find_safe_file:
+        print 'SAFE already exists! return..'
+        return
+
     #'http://anwang.com/download/safe_v1.0.1_linux.tar.gz'
     ret = 0
     package_name = 'safe_v1.0.1_linux.tar.gz'
@@ -23,7 +31,6 @@ def main():
         ret = subprocess.call(parse_package_cmd, shell=True)
 
         ##step 3: create workdir : ~/.safe
-        safe_home = '~/.safe'
         mkdir_cmd = 'mkdir ' + safe_home
         ret = subprocess.call(mkdir_cmd, shell=True)
 
@@ -48,7 +55,6 @@ def main():
             #cp_dep_to_gen_root = 'cp -rf ./safe_v1.0.1/deps/usr ./'
             cp_dep_to_gen_root = 'cp -rf ./safe_v1.0.1/deps/usr /'
             print cp_dep_to_gen_root
-            print 'please input root password'
             ret = subprocess.call(cp_dep_to_gen_root, shell=True)
             exec_safed = '~/.safe/safed &'
             ret = subprocess.call(exec_safed, shell=True)
