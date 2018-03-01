@@ -63,7 +63,7 @@ MnChangePage::MnChangePage(QWidget *parent)
 void MnChangePage::initializePage()
 {
     Database mydb;
-    CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_ip));
+    CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_tx_hash));
 
     AliasLineEdit->setText(cmn.m_alias);
     HostLineEdit->setText(cmn.m_ip);
@@ -118,7 +118,7 @@ void ChangeDialog::accept()
     QByteArray mn_index = field("c_mn_hash_index").toByteArray();
 
     Database mydb;
-    CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_ip));
+    CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_tx_hash));
 
     if(QString(mn_user).compare("root",Qt::CaseInsensitive))
     {

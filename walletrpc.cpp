@@ -88,10 +88,7 @@ QJsonObject WalletRPC::getinfo()
     {
         subObj = retData.toObject();
     }
-    else
-    {
-        subObj.insert("Info", retData);
-    }
+
     return subObj;
 }
 
@@ -132,10 +129,6 @@ QJsonObject WalletRPC::masternodeStatus()
     if (retData.isObject())
     {
         subObj = retData.toObject();
-    }
-    else
-    {
-        //qDebug()<< "!!! is not object";
     }
 
     return subObj;

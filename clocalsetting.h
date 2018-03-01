@@ -34,5 +34,7 @@ public:
 
 extern CLocalSetting local_setting;
 extern QString g_current_ip;
+extern QString g_current_tx_hash;
+extern QString MNSTATUS[];
 
 #endif // CLOCALSETTING_H

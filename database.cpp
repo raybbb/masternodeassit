@@ -26,7 +26,7 @@ bool Database::createMnTable()
 {
     QSqlQuery sql_query(sqldb);
     QString createTable = "CREATE TABLE t_master_node" \
-                          "(ip TEXT NOT NULL PRIMARY KEY, seqdata BLOB NOT NULL)";
+                          "(mnhash TEXT NOT NULL PRIMARY KEY, seqdata BLOB NOT NULL)";
     if(!sql_query.exec(createTable))
     {
         qDebug() << "Error: Fail to create table." << sql_query.lastError();
@@ -39,12 +39,12 @@ bool Database::createMnTable()
     return true;
 }
 
-bool Database::addMn(QString ip, const QByteArray &seqStr)
+bool Database::addMn(QString qsKey, const QByteArray &seqStr)
 {
     QSqlQuery sql_query(sqldb);
-    QString insert_sql = "insert into t_master_node (ip, seqdata) values (:ip,:seqdata)";
+    QString insert_sql = "insert into t_master_node (mnhash, seqdata) values (:mnhash,:seqdata)";
     sql_query.prepare(insert_sql);
-    sql_query.bindValue(":ip",ip);
+    sql_query.bindValue(":mnhash",qsKey);
     sql_query.bindValue(":seqdata", seqStr, QSql::Binary);
 
     if(!sql_query.exec())
@@ -59,10 +59,10 @@ bool Database::addMn(QString ip, const QByteArray &seqStr)
     return true;
 }
 
-bool Database::delMn(QString ip)
+bool Database::delMn(QString qsKey)
 {
     QSqlQuery sql_query(sqldb);
-    QString deleteMn = "DELETE FROM t_master_node WHERE ip=\"" + ip + "\"";
+    QString deleteMn = "DELETE FROM t_master_node WHERE mnhash=\"" + qsKey + "\"";
     qDebug() << deleteMn;
 
     if(!sql_query.exec(deleteMn))
@@ -87,7 +87,7 @@ QMap<QString, QByteArray> Database::queryData()
         {
             QString strDt;
             QByteArray data;
-            strDt = query.value("ip").toString();
+            strDt = query.value("mnhash").toString();
             data = query.value("seqdata").toByteArray();
             dbMap[strDt] = data;
         }
@@ -101,11 +101,11 @@ QMap<QString, QByteArray> Database::queryData()
 }
 
 
-QByteArray Database::queryData(const QString &qsIp)
+QByteArray Database::queryData(const QString &qsKey)
 {
     QSqlQuery query(sqldb);
     QByteArray data;
-    if (query.exec("SELECT * from t_master_node where ip='" + qsIp + "'"))
+    if (query.exec("SELECT * from t_master_node where mnhash='" + qsKey + "'"))
     {
         while (query.next())
         {
@@ -119,15 +119,14 @@ QByteArray Database::queryData(const QString &qsIp)
     return data;
 }
 
-bool Database::updateMn(const QString &qsIp, const QByteArray &seqData)
+bool Database::updateMn(const QString &qsKey, const QByteArray &seqData)
 {
-
     QSqlQuery query(sqldb);
-    QString strSql = "update t_master_node set seqdata = :value where ip = :ip;";
+    QString strSql = "update t_master_node set seqdata = :value where mnhash = :mnhash;";
     query.prepare(strSql);
 
     query.bindValue(":value", seqData, QSql::Binary);
-    query.bindValue(":ip", qsIp);
+    query.bindValue(":mnhash", qsKey);
 
     if(!query.exec())
     {
