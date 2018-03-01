@@ -100,12 +100,19 @@ QString WalletRPC::masternodeGenkey()
     return retData.toString();
 }
 
+QString WalletRPC::getblockcount()
+{
+    qDebug() << "getblockcount";
+    QByteArray array("{\"jsonrpc\":\"1.0\", \"method\":\"getblockcount\", \"params\": []}");
+    QJsonValue retData = execCmd(array);
+    return QString::number(retData.toDouble(), 10, 0);
+}
+
 QString WalletRPC::getaccountaddress(QString label)
 {
     qDebug() << "getaccountaddress";
     QString cmdInfo = "{\"jsonrpc\":\"1.0\", \"method\":\"getaccountaddress\", \"params\": [\"" + label + "\"]}";
     QByteArray array(cmdInfo.toUtf8());
-
     QJsonValue retData = execCmd(array);
     return retData.toString();
 }
