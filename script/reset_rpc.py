@@ -14,12 +14,12 @@ def safe_restart(safe_home):
     if ret == 0:
         time.sleep(0.5);
     	ret = subprocess.call(cmd_start, shell=True)
-	if ret == 0:
-	    print "restart suc!!"
-	else:
-	    print "restart err!"
+    	if ret == 0:
+    	    print "restart suc!!"
+    	else:
+    	    print "restart err!"
     else:
-	print "stop err!"
+        print "stop err!"
 
 
 def reset_item(fileName, item, value):
