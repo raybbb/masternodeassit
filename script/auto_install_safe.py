@@ -19,7 +19,7 @@ def main():
     #'http://anwang.com/download/safe_v1.0.1_linux.tar.gz'
     ret = 0
     package_name = 'safe_v1.0.1_linux.tar.gz'
-    url_base = 'http://anwang.com/download/'
+    url_base = 'http://www.anwang.com/download/'
     package_url = url_base + package_name
     ##step 1: download package
     get_package_cmd = 'wget ' + package_url
