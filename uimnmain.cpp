@@ -415,23 +415,13 @@ void UIMnMain::buttonClick()
 
 void UIMnMain::recvMnInfo(const CMasternode &cmn)
 {
-    //mMasternodes.insert(pair<QString, CMasternode>(cmn.m_ip, cmn));
-    //mMasternodes[cmn.m_ip].m_status = S_MNSTATUS[UNLOAD];
-
-    //insertTableWidgetItem(mMasternodes[cmn.m_ip]);
-    //show_masternode(mMasternodes[cmn.m_ip]);
-    // 设置按钮可以上传，不可添加,可以修改
-
     CMasternode cmn_recv = cmn;
     cmn_recv.m_status = MNSTATUS[E_STATUS::UNLOAD];
-
     show_masternode(cmn_recv);
-
     ui->pb_upload->setEnabled(true);
     ui->pb_rechange->setEnabled(true);
     ui->pb_add->setEnabled(false);
 
-    //current_ip = cmn.m_ip;
     g_current_ip = cmn.m_ip;
     g_current_tx_hash = cmn.m_clltrl_hash;
 
@@ -441,23 +431,41 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     local_setting.safe_conf_file = cmn.m_safe_conf_path;
     local_setting.masternode_conf_path = cmn.m_mn_conf_path;
 
-    //showLocalSetting();
-
     QByteArray tmp_array = CMasternode::Serializable(cmn_recv);
-    mydb.addMn(cmn_recv.m_clltrl_hash, tmp_array);
+    QByteArray data = mydb.queryData(g_current_tx_hash);
+    if (data != "")
+    {
+        mydb.updateMn(cmn_recv.m_clltrl_hash, tmp_array);
+        //changeMasternodeConfig(cmn_recv);
+    }
+    else
+    {
+        mydb.addMn(cmn_recv.m_clltrl_hash, tmp_array);
+    }
+    showProcessMessage(QString("生成交易哈希:%1，服务器IP:%2的配置文件。"
+                               "点击上传，或者修改。")
+                       .arg(g_current_tx_hash).arg(g_current_ip));
+
 }
 
 void UIMnMain::recvChangeMnInfo(const CMasternode &cmn)
 {
     if (g_current_tx_hash != cmn.m_clltrl_hash)
     {
-        mydb.delMn(g_current_tx_hash);
+        g_current_tx_hash = cmn.m_clltrl_hash;
         g_current_ip = cmn.m_ip;
-        mydb.addMn(g_current_tx_hash, CMasternode::Serializable(cmn));
+    }
+
+    QByteArray data = mydb.queryData(g_current_tx_hash);
+    if (data != "")
+    {
+        // 已经在数据库中
+        mydb.updateMn(g_current_tx_hash, CMasternode::Serializable(cmn));
     }
     else
     {
-        mydb.updateMn(g_current_tx_hash, CMasternode::Serializable(cmn));
+        // 不在数据库中
+        mydb.addMn(g_current_tx_hash, CMasternode::Serializable(cmn));
     }
 
     // 修改后，变成可上传
@@ -907,4 +915,10 @@ void UIMnMain::on_pb_rechange_clicked()
 {
     changedialog.exec();
     changedialog.restart();
+}
+
+void UIMnMain::on_pb_stop_clicked()
+{
+    // 清理节点
+
 }

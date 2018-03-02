@@ -184,15 +184,14 @@ void ChangeDialog::accept()
              }
 
              QString qbData = mnFile.readAll();
-
-             QString qsReplace = QString("\n") + QString(mn_name) + QString(" ")
+             QString qsReplace = QString(mn_name) + QString(" ")
                      + QString(mn_host) + QString(":") + QString("5555") + QString(" ");
              qsReplace += QString(mn_genkey) + QString(" ") + QString(mn_hash)
                      + QString(" ") + QString(mn_index) + QString("\n");
 
-             qbData.replace(QRegExp("\\n\\s*" + cmn.m_alias + "\\s*"+ cmn.m_ip + ":5555" + ".+\\n"),
-                            qsReplace);
-
+             qbData.replace(QRegExp("[^\\n]?\\S+\\s+\\S+:5555\\s+\\S+\\s+"
+                                    +mn_hash+"\\s+\\d+[\\n]?"),QString(qsReplace));
+             mnFile.resize(0);
              mnFile.write(qbData.toLocal8Bit());
              mnFile.close();
          }
@@ -204,7 +203,6 @@ void ChangeDialog::accept()
     else
     {
         qDebug()<<"Can not find masternode.conf...";
-        // @TODO show file dialog...
     }
 
     cmn.m_ip = QString(mn_host);

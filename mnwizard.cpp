@@ -148,7 +148,7 @@ void MnWizard::accept()
 
     QFile headerFile("./safeconf/" + QString(host));
 
-    if (!headerFile.open(QFile::WriteOnly | QFile::Text))
+    if (!headerFile.open(QFile::WriteOnly | QFile::Text ))
     {
         QMessageBox::warning(this,tr("提示"),
                      tr("保存文件时出现错误，请查看safeconf目录否被占用"));
@@ -173,7 +173,7 @@ void MnWizard::accept()
                  return;
              }
 
-             QByteArray qbData = mnFile.readAll();
+             QString qbData = mnFile.readAll();
 
              // 如果配置文件没有回车或者换行作为结尾，你们给他加一个。
              if (qbData.size() > 0)
@@ -190,10 +190,20 @@ void MnWizard::accept()
              blockmnconf += QString(mnkey) + QString(" ") + QString(mnclltrlh)
                      + QString(" ") + QString(mnclltrlindex) + QString("\n");
 
-             mnFile.seek(mnFile.size());
-             mnFile.write(blockmnconf);
-             mnFile.close();
+             if (qbData.contains(mnclltrlh))
+             {
+                 qbData.replace(QRegExp("[^\\n]?\\S+\\s+\\S+:5555\\s+\\S+\\s+"
+                                        +mnclltrlh+"\\s+\\d+[\\n]?"),QString(blockmnconf));
+                 mnFile.resize(0);
+                 mnFile.write(qbData.toLocal8Bit());
+             }
+             else
+             {
+                 mnFile.seek(mnFile.size());
+                 mnFile.write(blockmnconf);
+             }
 
+             mnFile.close();
              local_setting.mn_alias<<mnalias;  // 将别名放入别名列表，防止连续添加出现相同的别名
          }
          else
@@ -317,6 +327,7 @@ void AddressPage::generateAddr()
     {
         QMessageBox::warning(this,tr("提示"),
                      tr("调用RPC获取地址失败，请检查SAFE钱包程序是否已经打开。"));
+        exit(1);
     }
 }
 
@@ -515,6 +526,8 @@ MasternodeInfoPage::MasternodeInfoPage(QWidget *parent)
 //! [16]
 void MasternodeInfoPage::initializePage()
 {
+    CollateralHashComboBox->clear();
+
     WalletRPC walletRpc("127.0.0.1",
                         local_setting.local_rpc_user,
                         local_setting.local_rpc_pwd);
@@ -526,13 +539,13 @@ void MasternodeInfoPage::initializePage()
     }
     else
     {
-        // @todo something;
         QMessageBox::warning(this,tr("提示"),
                      tr("请检查SAFE钱包程序是否已经打开。"));
+        exit(1);
+
     }
 
     QJsonObject qjsonOutput = walletRpc.masternodeOutputs();
-
     Database mydb;
     for (QJsonObject::Iterator it = qjsonOutput.begin();
          it!=qjsonOutput.end(); it++)
