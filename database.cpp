@@ -104,7 +104,7 @@ QMap<QString, QByteArray> Database::queryData()
 QByteArray Database::queryData(const QString &qsKey)
 {
     QSqlQuery query(sqldb);
-    QByteArray data;
+    QByteArray data = "";
     if (query.exec("SELECT * from t_master_node where mnhash='" + qsKey + "'"))
     {
         while (query.next())
