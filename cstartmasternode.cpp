@@ -32,6 +32,7 @@ void CStartMasternode::run()
         ssh2.mn_exec(QString("python" + QString(" ")
                      + local_setting.remote_script_path
                      + local_setting.install_script).toStdString().c_str());
-        emit sigMasternodeFinishStart();
+
+        //emit sigMasternodeFinishStart();
     }
 }

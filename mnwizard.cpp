@@ -57,7 +57,7 @@
 #include "cregistry.h"
 #include "database.h"
 
-#define _Debug
+//#define _Debug
 
 //! [0] //! [1]
 MnWizard::MnWizard(QWidget *parent)

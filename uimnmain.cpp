@@ -32,7 +32,7 @@ UIMnMain::UIMnMain(QWidget *parent):
     connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
     connect(&changedialog, &ChangeDialog::sigMasternodeChange, this, &UIMnMain::recvChangeMnInfo);
     connect(&mns, &CStartMasternode::sigMasternodeFinishStart, this, &UIMnMain::mnSetupComplete);
-    //connect(this, &UIMnMain::sigMasternodeSynOver, this, &UIMnMain::doSynOver);
+    connect(this, &UIMnMain::sigMasternodeSynOver, this, &UIMnMain::doSynOver);
 
     qApp->setStyleSheet("QTableCornerButton::section{background-color:rgba(232,255,213,5);}");
 
@@ -278,6 +278,7 @@ void UIMnMain::initForm()
 
     ui->labTitle->setText("Masternode快速搭建工具");
     ui->pb_remove->setVisible(false);
+    ui->pb_stop->setVisible(false);
     this->setWindowTitle("Masternode快速搭建工具");
 
     QList<QToolButton *> btns = ui->widgetLeft->findChildren<QToolButton *>();
@@ -304,7 +305,7 @@ void UIMnMain::ShowMasternodeStatus()
     {
         showProcessMessage("同步区块/总区块高度 "+ currentBlock+"/"
                           +QString::number(nTotalBlock)
-                          + QString("  完成 %1 %").arg(QString::number(dPs, 'f', 2)));
+                          + QString("  完成 %1 %").arg(QString::number(dPs*100, 'f', 2)));
     }
     else
     {
@@ -478,9 +479,9 @@ void UIMnMain::doSynOver()
 
     ui->pb_add->setEnabled(true);
     ui->pb_stop->setEnabled(true);
-
     timer->stop();
     hlth_timer->stop();
+    showProcessMessage("数据同步完成，打开本地钱包，启动别名", E_MESSAGE);
 }
 
 // Masternode节点完成安装
