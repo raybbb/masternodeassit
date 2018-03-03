@@ -14,11 +14,12 @@ public:
 
     QJsonObject getinfo();
     QString masternodeGenkey();
-    QString getblockcount();
+    QString     getblockcount();
     QString getaccountaddress(QString label);
     //void masternodeStop();
     QJsonObject masternodeStatus();
     QJsonObject masternodeOutputs();
+    QJsonValue masternodeDebug();
 
 public slots:
     QJsonValue parseResponse(QByteArray &responseData);

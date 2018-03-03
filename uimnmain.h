@@ -26,9 +26,10 @@ protected:
     // 进行鼠界面的拖动
     virtual void mousePressEvent(QMouseEvent *event);
 public:
-
     explicit UIMnMain(QWidget *parent = 0);
     ~UIMnMain();
+signals:
+    void sigMasternodeSynOver();
 
 private:
     void insertTableWidgetItem(CMasternode cmn);
@@ -46,8 +47,12 @@ private:
     QString current_ip;
     CMasternode current_mn;
     QTimer *timer;
+    QTimer *hlth_timer;
     CStartMasternode mns;
     Database mydb;
+    bool isGenLocalSafeByProgram;
+    int nTotalBlock;
+    int nCurrentBlock;
 
 private slots:
     void initForm();
@@ -56,9 +61,10 @@ private slots:
     void recvMnInfo(const CMasternode &cmn);
     void recvChangeMnInfo(const CMasternode &cmn);
     void show_masternode(const CMasternode &cmn);
-    void ShowInfoMessage();
-    void ShowMasternodeStatusMessage();
+    void GetMasternodeInfo();
+    void ShowMasternodeStatus();
     void mnSetupComplete();
+    void doSynOver();
 
     void showProcessMessage(const QString &msg, E_MESSAGE_LEVEL ml=E_INFO);
     void showLocalSetting();

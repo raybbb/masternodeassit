@@ -82,13 +82,19 @@ mn_libssh2::~mn_libssh2()
 int mn_libssh2::mn_init()
 {
     int rc = 0;
+
+    if (isLoad == false)
+    {
+        return -2;
+    }
+
 #ifdef WIN32
     WSADATA wsadata;
     int err;
     err = WSAStartup(MAKEWORD(2,0), &wsadata);
     if (err != 0) {
         qDebug("WSAStartup failed with error: %d\n", err);
-        return 1;
+        return -1;
     }
 #endif
 

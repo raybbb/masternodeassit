@@ -25,6 +25,7 @@ public:
     QString start_script;
     QString restart_script;
     QString stop_script;
+    QString reset_rpc_script;
 
     map<QString, QString> mn_old_info;
     map<QString, QString> mn_new_info;

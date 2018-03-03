@@ -503,7 +503,7 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
             <bool>false</bool>
            </property>
            <property name="text">
-            <string>停止节点</string>
+            <string>禁用 RPC</string>
            </property>
           </widget>
          </item>
@@ -512,7 +512,7 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
            <item>
             <widget class="QPushButton" name="pb_add">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -558,7 +558,7 @@ background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #00326B,stop:1 
               </size>
              </property>
              <property name="text">
-              <string>移除Masternode</string>
+              <string>清除Masternode</string>
              </property>
             </widget>
            </item>

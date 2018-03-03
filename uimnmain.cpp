@@ -32,6 +32,7 @@ UIMnMain::UIMnMain(QWidget *parent):
     connect(&mnwizard, &MnWizard::sigMasternodeAdd, this, &UIMnMain::recvMnInfo);
     connect(&changedialog, &ChangeDialog::sigMasternodeChange, this, &UIMnMain::recvChangeMnInfo);
     connect(&mns, &CStartMasternode::sigMasternodeFinishStart, this, &UIMnMain::mnSetupComplete);
+    //connect(this, &UIMnMain::sigMasternodeSynOver, this, &UIMnMain::doSynOver);
 
     qApp->setStyleSheet("QTableCornerButton::section{background-color:rgba(232,255,213,5);}");
 
@@ -47,15 +48,21 @@ UIMnMain::UIMnMain(QWidget *parent):
         qDebug("open file faild...");
     }
 
-    showProcessMessage("启动 SAFE MASTERNODE 搭建工具", E_MESSAGE);
+    showProcessMessage("启动 SAFE MASTERNODE 搭建工具，"
+                       "点击“添加Masternode”按钮，按照向导填写必要的信息。", E_MESSAGE);
 
     initTableWidget();
     initSetting();
     initDatabase();
 
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(ShowInfoMessage()));
-    connect(timer, SIGNAL(timeout()), this, SLOT(ShowMasternodeStatusMessage()));
+    hlth_timer = new QTimer(this);
+
+    connect(timer, SIGNAL(timeout()), this, SLOT(GetMasternodeInfo()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(ShowMasternodeStatus()));
+    isGenLocalSafeByProgram = false;
+    nTotalBlock = 0;
+    nCurrentBlock = 0;
 }
 
 void UIMnMain::mousePressEvent(QMouseEvent *event)
@@ -93,6 +100,7 @@ void UIMnMain::initSetting()
     local_setting.start_script = "masternode_start.sh";
     local_setting.restart_script = "masternode_restart.sh";
     local_setting.stop_script = "masternode_stop.sh";
+    local_setting.reset_rpc_script = "reset_rpc.py";
 
     if(!CRegistry::readDataDir(local_setting.safe_conf_path))
     {
@@ -101,15 +109,10 @@ void UIMnMain::initSetting()
         exit(0);
     }
 
-    showProcessMessage(QString("钱包路径是 %1")
-                       .arg(local_setting.safe_conf_path), E_MESSAGE);
     QString localSafeConfFile = local_setting.safe_conf_path + "\\safe.conf";
     QFile file(localSafeConfFile);
     if(file.exists())
     {
-        showProcessMessage(QString("配置文件 %1")
-                           .arg(localSafeConfFile), E_MESSAGE);
-
         int hasConfigRpc = 0;
         if(file.open(QIODevice::ReadWrite))
         {
@@ -131,8 +134,6 @@ void UIMnMain::initSetting()
                         local_setting.local_rpc_user = safe_conf_line.mid(++begin,--end);
                         local_setting.local_rpc_user.replace("\r\n", "\0");
                         hasConfigRpc ++;
-                        showProcessMessage(QString("RPC用户名 %1")
-                                           .arg(local_setting.local_rpc_user), E_MESSAGE);
                     }
                 }
                 if (safe_conf_line.startsWith("rpcpassword"))
@@ -144,8 +145,6 @@ void UIMnMain::initSetting()
                         local_setting.local_rpc_pwd = safe_conf_line.mid(++begin,--end);
                         local_setting.local_rpc_pwd.replace("\r\n", "\0");
                         hasConfigRpc ++;
-                        showProcessMessage(QString("RPC密码 %1")
-                                           .arg(local_setting.local_rpc_pwd), E_MESSAGE);
                     }
                 }
                 safe_conf_line =  file.readLine();
@@ -158,6 +157,7 @@ void UIMnMain::initSetting()
             showProcessMessage("没有检查到RPC的相关配置", E_ERROR);
             LocalrpcDialog llrpc;
             llrpc.exec();
+            isGenLocalSafeByProgram = true;
         }
     }
     else
@@ -277,6 +277,7 @@ void UIMnMain::initForm()
     //ui->widgetTitle->setVisible(false);
 
     ui->labTitle->setText("Masternode快速搭建工具");
+    ui->pb_remove->setVisible(false);
     this->setWindowTitle("Masternode快速搭建工具");
 
     QList<QToolButton *> btns = ui->widgetLeft->findChildren<QToolButton *>();
@@ -287,72 +288,68 @@ void UIMnMain::initForm()
     }
 }
 
-void UIMnMain::ShowMasternodeStatusMessage()
-{
 
+void UIMnMain::ShowMasternodeStatus()
+{
     WalletRPC wallet(local_setting.remote_rpc_ip,
                      local_setting.remote_rpc_user,
                      local_setting.remote_rpc_pwd);
 
-    QJsonObject qjObj = wallet.masternodeStatus();
+    QString currentBlock = wallet.getblockcount();
+    qDebug()<< "number: " << currentBlock;
+    nCurrentBlock = currentBlock.toInt();
+    double dPs = currentBlock.toDouble() / nTotalBlock;
 
-    if(qjObj.size() > 0)
+    if(nCurrentBlock)
     {
-        for (QJsonObject::Iterator it = qjObj.begin();
-             it!=qjObj.end();it++)
-        {
-            qDebug()<<"key:"<<it.key() << ": " <<it.value();
-
-            if (it.value().isDouble())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   + QString("%1").arg(QString::number(it.value().toDouble())));
-            }
-            else if (it.value().isString())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   +it.value().toString());
-            }
-        }
+        showProcessMessage("同步区块/总区块高度 "+ currentBlock+"/"
+                          +QString::number(nTotalBlock)
+                          + QString("  完成 %1 %").arg(QString::number(dPs, 'f', 2)));
     }
     else
     {
-        //ui->textEdit_log->append("无~");
+        showProcessMessage("同步索引...");
     }
 
+    if (nCurrentBlock == nTotalBlock)
+    {
+        showProcessMessage("区块数据同步完成...");
+        emit sigMasternodeSynOver();
+    }
 }
 
-void UIMnMain::ShowInfoMessage()
+void UIMnMain::GetMasternodeInfo()
 {
-    WalletRPC wallet(local_setting.remote_rpc_ip,
+
+    WalletRPC remote_wallet(local_setting.remote_rpc_ip,
                      local_setting.remote_rpc_user,
                      local_setting.remote_rpc_pwd);
 
-    QJsonObject qjObj = wallet.getinfo();
+    WalletRPC local_wallet("127.0.0.1",
+                     local_setting.local_rpc_user,
+                     local_setting.local_rpc_pwd);
 
-    if (qjObj.size()>0)
+    QJsonObject qjObj = local_wallet.getinfo();
+
+    if (qjObj.size() > 0)
     {
         for (QJsonObject::Iterator it = qjObj.begin();
              it!=qjObj.end();it++)
         {
             qDebug()<<"key:"<<it.key() << ": " <<it.value();
 
-            if (it.value().isDouble())
+            if (it.key() == "blocks")
             {
-                showProcessMessage("\t" + it.key()+" : "
-                                   + QString("%1").arg(QString::number(it.value().toDouble())));
-
-            }
-            else if (it.value().isString())
-            {
-                showProcessMessage("\t" + it.key()+" : "
-                                   +it.value().toString());
+                nTotalBlock = it.value().toDouble();
+                qDebug()<<it.key()+" : " + QString("%1").arg(QString::number(it.value().toDouble()));
             }
         }
     }
-    else
+
+    QJsonValue qv = remote_wallet.masternodeDebug();
+    if (qv.toString() != "")
     {
-         ui->textEdit_log->append("无~");
+        showProcessMessage("Masternode debug: " + qv.toString());
     }
 }
 
@@ -442,10 +439,10 @@ void UIMnMain::recvMnInfo(const CMasternode &cmn)
     {
         mydb.addMn(cmn_recv.m_clltrl_hash, tmp_array);
     }
-    showProcessMessage(QString("生成交易哈希:%1，服务器IP:%2的配置文件。"
-                               "点击上传，或者修改。")
+    showProcessMessage(QString("生成交易哈希:%1，服务器IP:%2的配置文件。")
                        .arg(g_current_tx_hash).arg(g_current_ip));
-
+    showProcessMessage("点击“上传配置”将配置信息上传到服务器，"
+                       "（如果填写有误可以选择“修改节点）”。", E_MESSAGE);
 }
 
 void UIMnMain::recvChangeMnInfo(const CMasternode &cmn)
@@ -473,10 +470,24 @@ void UIMnMain::recvChangeMnInfo(const CMasternode &cmn)
     show_masternode(cmn);
 }
 
+void UIMnMain::doSynOver()
+{
+    CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_tx_hash));
+    cmn.m_status = "STARTED";
+    mydb.updateMn(g_current_tx_hash, CMasternode::Serializable(cmn));
+
+    ui->pb_add->setEnabled(true);
+    ui->pb_stop->setEnabled(true);
+
+    timer->stop();
+    hlth_timer->stop();
+}
+
 // Masternode节点完成安装
 void UIMnMain::mnSetupComplete()
 {
-    ui->pb_add->setEnabled(true);
+    //ui->pb_add->setEnabled(true);
+    doSynOver();
 }
 
 void UIMnMain::showProcessMessage(const QString &msg, E_MESSAGE_LEVEL ml)
@@ -718,9 +729,26 @@ void UIMnMain::on_pb_upload_clicked()
      {
          ui->pb_upload->setEnabled(false);
          mn_libssh2 ssh2;
-         ssh2.mn_init();
+         int nRet = ssh2.mn_init();
+         if (nRet == -2)
+         {
+             QMessageBox::warning(this,tr("错误"),
+                          tr("查看libssh2.dll是否存在。"));
+             exit(0);
+         }
+         else if (nRet == -1)
+         {
+             QMessageBox::warning(this,tr("错误"),
+                          tr("网络模块加载失败。"));
+             exit(0);
+         }
+         else if (nRet == 1)
+         {
+             QMessageBox::warning(this,tr("错误"),
+                          tr("libssh2初始化失败。"));
+             exit(0);
+         }
 
-         //CMasternode cmd = mMasternodes[current_ip];
          CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_tx_hash));
 
          if(cmn.m_status == "")
@@ -736,6 +764,8 @@ void UIMnMain::on_pb_upload_clicked()
                        cmn.m_pwd.toStdString().c_str());
          if (!nRc)
          {
+             Sleep(100);
+
              showProcessMessage(QString("将配置文件%1 上传到服务器 %2")
                                 .arg(local_setting.new_safe_conf_files_path+g_current_ip)
                                 .arg(cmn.m_safe_conf_path.toStdString().c_str()));
@@ -854,8 +884,32 @@ void UIMnMain::on_pb_upload_clicked()
                  return;
              }
 
-             showProcessMessage(QString("安装需要的脚本上传成功，可以进行安装。")
-                                .arg(local_setting.stop_script));
+             showProcessMessage(QString("将重置脚本文件%1 上传到服务器 %2")
+                                .arg(local_setting.local_script_path+local_setting.reset_rpc_script)
+                                .arg(local_setting.remote_script_path+local_setting.reset_rpc_script));
+             // @todo upload those script...
+             nRc = ssh2.mn_scp_write(
+                         (local_setting.remote_script_path+local_setting.reset_rpc_script)
+                         .toStdString().c_str(),
+                         (local_setting.local_script_path+local_setting.reset_rpc_script)
+                         .toStdString().c_str());
+             if (!nRc)
+             {
+                 showProcessMessage(QString("%1文件上传成功！")
+                                    .arg(local_setting.reset_rpc_script));
+                 qDebug("upload the stop file success.");
+             }
+             else
+             {
+                 showProcessMessage(QString("%1文件上传失败！")
+                                    .arg(local_setting.reset_rpc_script), E_ERROR);
+                 QMessageBox::information(this,tr("提示"),
+                              tr("上传配置文件到服务器失败，详情查看日志。"));
+                 return;
+             }
+
+             showProcessMessage(QString("安装需要的脚本上传成功，"
+                                        "可以点击“启动节点”进行安装。"), E_MESSAGE);
 
              ui->pb_start->setEnabled(true);
 
@@ -893,7 +947,9 @@ void UIMnMain::on_pb_start_clicked()
         mns.start();
         cmn.m_status = "STARTING";
 
-        timer->start(10000);
+        timer->start(20000);
+        hlth_timer->start(10000);
+
         // 让start按钮不能重复响应
         ui->pb_start->setEnabled(false);
         ui->pb_rechange->setEnabled(false);
@@ -920,5 +976,53 @@ void UIMnMain::on_pb_rechange_clicked()
 void UIMnMain::on_pb_stop_clicked()
 {
     // 清理节点
+    CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_tx_hash));
+    mn_libssh2 ssh2;
+    int nRet = ssh2.mn_init();
+    if (nRet == -2)
+    {
+        QMessageBox::warning(this,tr("错误"),
+                     tr("查看libssh2.dll是否存在。"));
+        exit(0);
+    }
+    else if (nRet == -1)
+    {
+        QMessageBox::warning(this,tr("错误"),
+                     tr("网络模块加载失败。"));
+        exit(0);
+    }
+    else if (nRet == 1)
+    {
+        QMessageBox::warning(this,tr("错误"),
+                     tr("libssh2初始化失败。"));
+        exit(0);
+    }
+    nRet = ssh2.mn_login(cmn.m_ip.toStdString().c_str(),
+                            cmn.m_user.toStdString().c_str(),
+                            cmn.m_pwd.toStdString().c_str());
+    if (!nRet)
+    {
+        qDebug()<<QString("python" + QString(" ")
+                          + local_setting.remote_script_path
+                          + local_setting.reset_rpc_script).toStdString().c_str();
 
+        ssh2.mn_exec(QString("python" + QString(" ")
+                     + local_setting.remote_script_path
+                     + local_setting.reset_rpc_script).toStdString().c_str());
+    }
+
+    // 由程序填写的safe.conf 那么需要帮用户清理。
+    if (isGenLocalSafeByProgram)
+    {
+        QString localSafeConfFile = local_setting.safe_conf_path + "/safe.conf";
+        QFile file(localSafeConfFile);
+        if(file.exists())
+        {
+            if(file.open(QIODevice::ReadWrite))
+            {
+                isGenLocalSafeByProgram = false;
+                file.close();
+            }
+        }
+    }
 }
