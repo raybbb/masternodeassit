@@ -6,16 +6,24 @@
 import os
 import subprocess
 
+def safe_stop():
+    #cmd_stop = 'kill -9 `ps fuax|grep safed |grep -v grep| awk 'print $2'`'
+    safe_pid = "ps fuax| grep safed| grep -v grep| awk '{print $2}'"
+    cmd_stop = 'kill -9 ' + '`' + safe_pid + '`'
+    ret = subprocess.call(cmd_stop, shell=True)
+    if ret == 0:
+	    print "stop suc!"
+    else:
+        print "stop err!"
+
 
 def main():
     print '-------- start to install safe -----------'
 
-    safe_home = '~/.safe'
-    find_safe_file = os.path.exists(safe_home)
-    if find_safe_file:
-        print 'SAFE already exists! return..'
-        return
+    #stop process if it exists
+    safe_stop()
 
+    safe_home = '~/.safe'
     #'http://anwang.com/download/safe_v1.0.1_linux.tar.gz'
     ret = 0
     package_name = 'safe_v1.0.1_linux.tar.gz'
@@ -31,8 +39,10 @@ def main():
         ret = subprocess.call(parse_package_cmd, shell=True)
 
         ##step 3: create workdir : ~/.safe
-        mkdir_cmd = 'mkdir ' + safe_home
-        ret = subprocess.call(mkdir_cmd, shell=True)
+        find_safe_file = os.path.exists(safe_home)
+        if !find_safe_file:
+            mkdir_cmd = 'mkdir ' + safe_home
+            ret = subprocess.call(mkdir_cmd, shell=True)
 
         #step 4: copy files
         cp_file_to_home = 'cp ./safe.conf ' + safe_home
