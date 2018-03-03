@@ -40,7 +40,9 @@ def main():
 
         ##step 3: create workdir : ~/.safe
         find_safe_file = os.path.exists(safe_home)
-        if !find_safe_file:
+        if find_safe_file:
+            pass
+        else:
             mkdir_cmd = 'mkdir ' + safe_home
             ret = subprocess.call(mkdir_cmd, shell=True)
 
