@@ -1,4 +1,5 @@
 #include "database.h"
+#include <QCoreApplication>
 
 Database::Database()
 {
@@ -9,7 +10,9 @@ Database::Database()
     else
     {
         sqldb = QSqlDatabase::addDatabase("QSQLITE");
-        sqldb.setDatabaseName("./masternode.db");
+
+        sqldb.setDatabaseName(QCoreApplication::applicationDirPath()
+                              + "\\masternode.db");
 
         if (!sqldb.open())
         {

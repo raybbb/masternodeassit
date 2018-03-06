@@ -482,6 +482,7 @@ void UIMnMain::doSynOver()
     timer->stop();
     hlth_timer->stop();
     showProcessMessage("数据同步完成，打开本地钱包，启动别名", E_MESSAGE);
+    show_masternode(cmn);
 }
 
 // Masternode节点完成安装

@@ -50,7 +50,6 @@ HEADERS += \
     include/libssh2_publickey.h \
     include/libssh2_sftp.h \
     include/scp.h \
-    mn_puttyscp.h \
     configdialog.h \
     pages.h \
     uimnmain.h \
