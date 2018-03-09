@@ -1,7 +1,6 @@
 #include "masternodeassit.h"
 #include "ui_masternodeassit.h"
 #include "mnlibssh2.h"
-#include "mn_puttyscp.h"
 #include "configdialog.h"
 #include "uimnmain.h"
 

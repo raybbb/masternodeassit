@@ -58,18 +58,17 @@ mn_libssh2::mn_libssh2()
 
 mn_libssh2::~mn_libssh2()
 {
-    if(m_mylib.isLoaded())
-    {
-        m_mylib.unload();
-    }
     if(mp_session)
     {
-        /*
-         m_ssh2.ssh2_session_disconnect
+        m_ssh2.ssh2_session_disconnect
                 (mp_session,SSH_DISCONNECT_BY_APPLICATION,
                  "Normal Shutdown, Thank you for playing","");
         m_ssh2.ssh2_session_free(mp_session);
-        */
+    }
+
+    if(m_mylib.isLoaded())
+    {
+        m_mylib.unload();
     }
 
 #ifdef WIN32
@@ -163,6 +162,7 @@ int mn_libssh2::mn_login(const QString &strIp,const QString &strUsr,
             {
                 qDebug("Authentication ok.");
             }
+
         }
         catch(...)
         {
@@ -376,14 +376,7 @@ int mn_libssh2::mn_exec(const QString &strCmdline)
             rc = m_ssh2.ssh2_channel_read( channel, 0, buffer, sizeof(buffer) );
             if( rc > 0 )
             {
-                int i;
                 bytecount += rc;
-                qDebug("We read:\n");
-                for( i=0; i < rc; ++i )
-                {
-                    fputc( buffer[i], stderr);
-                }
-                qDebug("\n");
             }
             else {
                 if( rc != LIBSSH2_ERROR_EAGAIN )
@@ -429,3 +422,143 @@ shutdown:
     channel = NULL;
     return 0;
 }
+
+int mn_libssh2::mn_exec(const QString &strCmdline, QString &qsRespone)
+{
+    int rc;
+    int exitcode;
+    char *exitsignal=(char *)"none";
+    qsRespone = "";
+    int bytecount = 0;
+
+    LIBSSH2_CHANNEL* channel;
+    while( (channel = m_ssh2.ssh2_channel_open(mp_session,"session",sizeof("session") - 1,
+                                               LIBSSH2_CHANNEL_WINDOW_DEFAULT,
+                                               LIBSSH2_CHANNEL_PACKET_DEFAULT, NULL, 0)) == NULL
+           &&m_ssh2.ssh2_session_laster_error_msg(mp_session,NULL,NULL,0) ==LIBSSH2_ERROR_EAGAIN )
+    {
+        waitsocket(m_sock, mp_session);
+    }
+    if( channel == NULL )
+    {
+        return -1;
+    }
+    while( (rc = m_ssh2.ssh2_channel_process_startup
+            (channel,  "exec", sizeof("exec") - 1,
+             strCmdline.toStdString().c_str(),
+             (unsigned int)strCmdline.length()))
+           == LIBSSH2_ERROR_EAGAIN )
+    {
+        waitsocket(m_sock, mp_session);
+    }
+
+    if( rc != 0 )
+    {
+        goto shutdown;
+    }
+
+    for( ;; )
+    {
+        /* loop until we block */
+        int rc;
+        do
+        {
+            char buffer[0x4000] = {0};
+            rc = m_ssh2.ssh2_channel_read( channel, 0, buffer, sizeof(buffer) );
+            if( rc > 0 )
+            {
+                qsRespone.append(QString(buffer));
+                bytecount += rc;
+            }
+            else {
+                if( rc != LIBSSH2_ERROR_EAGAIN )
+                {
+                    /* no need to output this for the EAGAIN case */
+                    qDebug("libssh2_channel_read returned %d\n", rc);
+                }
+            }
+        }
+        while( rc > 0 );
+        /* this is due to blocking that would occur otherwise so we loop on
+           this condition */
+        if( rc == LIBSSH2_ERROR_EAGAIN )
+        {
+            waitsocket(m_sock, mp_session);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+shutdown:
+    exitcode = 127;
+    while( (rc = m_ssh2.ssh2_channel_close(channel)) == LIBSSH2_ERROR_EAGAIN )
+    {
+        waitsocket(m_sock, mp_session);
+    }
+
+    if( rc == 0 )
+    {
+        exitcode = m_ssh2.ssh2_channel_get_exit_status(channel);
+        m_ssh2.ssh2_channel_get_exit_signal(channel, &exitsignal,
+                                        NULL, NULL, NULL, NULL, NULL);
+    }
+
+    if (exitsignal)
+        qDebug("\nGot signal: %s\n", exitsignal);
+    else
+        qDebug("\nEXIT: %d bytecount: %d\n", exitcode, bytecount);
+
+    m_ssh2.ssh2_channel_free(channel);
+    channel = NULL;
+    return 0;
+}
+
+/*
+int mn_libssh2::mn_session_init(LIBSSH2_SESSION *session)
+{
+    int rc = 0;
+    session = m_ssh2.ssh2_session_init(NULL, NULL, NULL, NULL);
+
+    if(!session)
+    {
+        qDebug("ssh init failed!");
+        return -1;
+    }
+
+    rc = m_ssh2.ssh2_session_handshake(session, m_sock);
+
+    if (rc != 0)
+    {
+        qDebug("failure establishing SSH session: %d\n", rc);
+        return -1;
+    }
+
+    if (m_ssh2.ssh2_userauth(session,
+                             m_username.toStdString().c_str(),
+                             m_username.length(),
+                             m_password.toStdString().c_str(),
+                             m_password.length(),NULL))
+    {
+        qDebug("user name:%s\npasswd:%s",
+               m_username.toStdString().c_str(),
+               m_password.toStdString().c_str());
+        qDebug("Authentication by password failed.");
+        return -1;
+    }
+    else
+    {
+        qDebug("Authentication ok.");
+    }
+
+    return 0;
+}
+
+int mn_libssh2::mn_session_release(LIBSSH2_SESSION *session)
+{
+
+
+    return 0;
+}
+*/

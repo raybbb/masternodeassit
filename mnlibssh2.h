@@ -125,8 +125,10 @@ public:
     int mn_scp_read(const QString &strDest, const QString &strSrc);
     int mn_scp_write(const QString &strDest, const QString &strSrc);
     int mn_exec(const QString &strCmdline);
+    int mn_exec(const QString &strCmdline, QString &qsRespone);
 private:
     int waitsocket(int socket_fd, LIBSSH2_SESSION *session);
+    //int mn_session_init(LIBSSH2_SESSION *session);
 private:
     int m_sock;
     int m_auth_pw;

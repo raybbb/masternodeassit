@@ -593,7 +593,7 @@ void MasternodeInfoPage::initializePage()
         }
         local_setting.mn_new_info[it.key()] = it.value().toString();
     }
-//#define _Debug
+#define _Debug
 #ifdef _Debug
     CollateralHashComboBox->addItem("779bea4bef5f309f4cd3803a01af959564adafb103f4519880d0eabc9829fd00");
     local_setting.mn_new_info["779bea4bef5f309f4cd3803a01af959564adafb103f4519880d0eabc9829fd00"] ="250";

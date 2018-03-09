@@ -10,7 +10,7 @@
 #include <QDateTime>
 #include <QFile>
 #include <QDebug>
-
+#include <QJsonObject>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QApplication>
@@ -26,6 +26,7 @@ UIMnMain::UIMnMain(QWidget *parent):
     QDialog(parent),
     ui(new Ui::UIMnMain)
 {
+    CheckMasternodeFunctioning();
     ui->setupUi(this);
     this->initForm();
 
@@ -58,8 +59,8 @@ UIMnMain::UIMnMain(QWidget *parent):
     timer = new QTimer(this);
     hlth_timer = new QTimer(this);
 
+    connect(hlth_timer, SIGNAL(timeout()), this, SLOT(CheckMasternodeFunctioning()));
     connect(timer, SIGNAL(timeout()), this, SLOT(GetMasternodeInfo()));
-    connect(timer, SIGNAL(timeout()), this, SLOT(ShowMasternodeStatus()));
     isGenLocalSafeByProgram = false;
     nTotalBlock = 0;
     nCurrentBlock = 0;
@@ -290,6 +291,95 @@ void UIMnMain::initForm()
 }
 
 
+void UIMnMain::CheckMasternodeFunctioning()
+{
+    CMasternode cmn = CMasternode::DeSerializable(
+                mydb.queryData(g_current_tx_hash));
+
+    mn_libssh2 ssh2;
+    int nRet = ssh2.mn_init();
+    if (nRet == -2)
+    {
+        QMessageBox::warning(this,tr("错误"),
+                     tr("查看libssh2.dll是否存在。"));
+        exit(0);
+    }
+    else if (nRet == -1)
+    {
+        QMessageBox::warning(this,tr("错误"),
+                     tr("网络模块加载失败。"));
+    }
+
+    int nRc = ssh2.mn_login(cmn.m_ip.toStdString().c_str(),
+                  cmn.m_user.toStdString().c_str(),
+                  cmn.m_pwd.toStdString().c_str());
+    if (!nRc)
+    {
+        QString qsRespone = "";
+        ssh2.mn_exec(QString("/root/.safe/./safe-cli getblockcount"), qsRespone);
+        nCurrentBlock = qsRespone.toInt();
+        double dPs = qsRespone.toDouble() / nTotalBlock;
+        if ((nCurrentBlock>=nTotalBlock) && (nTotalBlock!=0))
+        {
+            showProcessMessage("区块数据同步完成...");
+            emit sigMasternodeSynOver();
+        }
+        else
+        {
+            if (qsRespone == "")
+            {
+                ssh2.mn_exec(QString("pgrep safed"), qsRespone);
+                if (qsRespone == "")
+                {
+                    // 检测安装进程的进程号
+                    ssh2.mn_exec(QString("ps -aux | grep auto_install_safe* "\
+                                         "| grep -v grep | awk '{print $2}'"), qsRespone);
+                    if (qsRespone == "")
+                    {
+                        // 没有安装进程，也没有safed进行，需要重启启动。
+                        showProcessMessage("未检测到远程服务器："+cmn.m_ip+"上面有安装过程和同步过程，"\
+                                           "可能远程服务器被重置。", E_ERROR);
+                    }
+                    else
+                    {
+                        showProcessMessage("服务器正在下载安装主节点。安装进程ID： " + qsRespone);
+                    }
+                }
+                /*
+                showProcessMessage("同步索引...");
+                qsRespone = "";
+                ssh2.mn_exec(QString("/root/.safe/./safe-cli masternode debug"), qsRespone);
+                showProcessMessage("Masternode 状态: "+qsRespone);
+                */
+            }
+            else
+            {
+                showProcessMessage("同步区块/总区块高度 "+ qsRespone+"/"
+                                  +QString::number(nTotalBlock)
+                                  + QString("  完成 %1 %").arg(QString::number(dPs*100, 'f', 2)));
+            }
+        }
+
+        /*
+        qsRespone = "";
+        ssh2.mn_exec(QString("/root/.safe/./safe-cli getinfo"), qsRespone);
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(
+                    qsRespone.toLocal8Bit().data());
+        if (jsonDocument.isNull())
+        {
+            qDebug()<< "check the input string is json.";
+        }
+        qDebug()<< "SSH output: " << jsonDocument.object().value("blocks");
+        */
+    }
+    else
+    {
+        showProcessMessage("登陆失败，查看远程服务器是否已经启动。");
+        //emit sigMasternodeSynOver();
+        qDebug()<< "login to service error.";
+    }
+}
+
 void UIMnMain::ShowMasternodeStatus()
 {
     WalletRPC wallet(local_setting.remote_rpc_ip,
@@ -309,7 +399,7 @@ void UIMnMain::ShowMasternodeStatus()
     }
     else
     {
-        showProcessMessage("同步索引...");
+        //showProcessMessage("同步索引...");
     }
 
     if (nCurrentBlock == nTotalBlock)
@@ -321,11 +411,7 @@ void UIMnMain::ShowMasternodeStatus()
 
 void UIMnMain::GetMasternodeInfo()
 {
-
-    WalletRPC remote_wallet(local_setting.remote_rpc_ip,
-                     local_setting.remote_rpc_user,
-                     local_setting.remote_rpc_pwd);
-
+    // 通过本地钱包RPC通信获取区块高度
     WalletRPC local_wallet("127.0.0.1",
                      local_setting.local_rpc_user,
                      local_setting.local_rpc_pwd);
@@ -337,21 +423,16 @@ void UIMnMain::GetMasternodeInfo()
         for (QJsonObject::Iterator it = qjObj.begin();
              it!=qjObj.end();it++)
         {
-            qDebug()<<"key:"<<it.key() << ": " <<it.value();
-
+            //qDebug()<<"key:"<<it.key() << ": " <<it.value();
             if (it.key() == "blocks")
             {
                 nTotalBlock = it.value().toDouble();
-                qDebug()<<it.key()+" : " + QString("%1").arg(QString::number(it.value().toDouble()));
+                qDebug()<<it.key()+" : " + QString("%1")
+                          .arg(QString::number(it.value().toDouble()));
             }
         }
     }
-
-    QJsonValue qv = remote_wallet.masternodeDebug();
-    if (qv.toString() != "")
-    {
-        showProcessMessage("Masternode debug: " + qv.toString());
-    }
+    //CheckMasternodeFunctioning();
 }
 
 void UIMnMain::insertTableWidgetItem(CMasternode cmn)
@@ -742,13 +823,11 @@ void UIMnMain::on_pb_upload_clicked()
          {
              QMessageBox::warning(this,tr("错误"),
                           tr("网络模块加载失败。"));
-             exit(0);
          }
          else if (nRet == 1)
          {
              QMessageBox::warning(this,tr("错误"),
                           tr("libssh2初始化失败。"));
-             exit(0);
          }
 
          CMasternode cmn = CMasternode::DeSerializable(mydb.queryData(g_current_tx_hash));
@@ -766,8 +845,6 @@ void UIMnMain::on_pb_upload_clicked()
                        cmn.m_pwd.toStdString().c_str());
          if (!nRc)
          {
-             Sleep(100);
-
              showProcessMessage(QString("将配置文件%1 上传到服务器 %2")
                                 .arg(local_setting.new_safe_conf_files_path+g_current_ip)
                                 .arg(cmn.m_safe_conf_path.toStdString().c_str()));
@@ -950,7 +1027,7 @@ void UIMnMain::on_pb_start_clicked()
         cmn.m_status = "STARTING";
 
         timer->start(20000);
-        hlth_timer->start(10000);
+        hlth_timer->start(50000);
 
         // 让start按钮不能重复响应
         ui->pb_start->setEnabled(false);
@@ -991,13 +1068,11 @@ void UIMnMain::on_pb_stop_clicked()
     {
         QMessageBox::warning(this,tr("错误"),
                      tr("网络模块加载失败。"));
-        exit(0);
     }
     else if (nRet == 1)
     {
         QMessageBox::warning(this,tr("错误"),
                      tr("libssh2初始化失败。"));
-        exit(0);
     }
     nRet = ssh2.mn_login(cmn.m_ip.toStdString().c_str(),
                             cmn.m_user.toStdString().c_str(),

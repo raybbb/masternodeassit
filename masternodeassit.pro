@@ -26,7 +26,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         masternodeassit.cpp \
-    mn_puttyscp.cpp \
     configdialog.cpp \
     pages.cpp \
     uimnmain.cpp \

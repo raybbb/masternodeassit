@@ -62,6 +62,7 @@ private slots:
     void recvChangeMnInfo(const CMasternode &cmn);
     void show_masternode(const CMasternode &cmn);
     void GetMasternodeInfo();
+    void CheckMasternodeFunctioning();
     void ShowMasternodeStatus();
     void mnSetupComplete();
     void doSynOver();
