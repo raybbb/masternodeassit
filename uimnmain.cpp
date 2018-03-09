@@ -49,12 +49,10 @@ UIMnMain::UIMnMain(QWidget *parent):
         qDebug("open file faild...");
     }
 
-    showProcessMessage("启动 SAFE MASTERNODE 搭建工具，"
-                       "点击“添加Masternode”按钮，按照向导填写必要的信息。", E_MESSAGE);
-
     initTableWidget();
     initSetting();
     initDatabase();
+    initPanelWidget();
 
     timer = new QTimer(this);
     hlth_timer = new QTimer(this);
@@ -290,6 +288,33 @@ void UIMnMain::initForm()
     }
 }
 
+void UIMnMain::initPanelWidget()
+{
+    // @TODO 以后用model delegate的方式
+    frms.clear();
+    for (int i = 0; i < 100; i++) {
+        MasternodePanel *frm = new MasternodePanel;
+        frm->setFixedHeight(100);
+        frm->setMasternodeName(QString("Masternode别名 %1").arg(i + 1));
+        frm->setMasternodeServerIp("192.168.2.12");
+        frm->setMasternodeHash("dfnmjkk2jkjolmlml,98uygfvbnedujkmbvhjcm");
+        frm->setHeight(1024);
+        frm->setStatus("ACTIVE");
+        frm->adjustSize();
+        frms.append(frm);
+
+        QListWidgetItem *item = new QListWidgetItem(ui->lw_masternodes);
+        item->setSizeHint(frm->size());
+        ui->lw_masternodes->addItem(item);
+        ui->lw_masternodes->setItemWidget(item, frm);
+    }
+
+    // 双击选中的Masternode
+    connect(ui->lw_masternodes,
+            &QListWidget::itemDoubleClicked,
+            this,
+            &UIMnMain::selectMasternodeList);
+}
 
 void UIMnMain::CheckMasternodeFunctioning()
 {
@@ -1102,4 +1127,11 @@ void UIMnMain::on_pb_stop_clicked()
             }
         }
     }
+}
+
+void UIMnMain::selectMasternodeList(QListWidgetItem *selectItem)
+{
+    MasternodePanel *frm = dynamic_cast<MasternodePanel *>
+            (ui->lw_masternodes->itemWidget(selectItem));
+    showProcessMessage("GetDeviceName: " + frm->getMasternodeName());
 }

@@ -10,6 +10,7 @@
 #include "changedialog.h"
 #include "cstartmasternode.h"
 #include "database.h"
+#include "form/MasternodePanel.h"
 
 using namespace std;
 
@@ -37,6 +38,7 @@ private:
     void removeTableWidgetItem(int nIndex);
     void initSetting();
     void initDatabase();
+    void initPanelWidget();
 
 private:
     Ui::UIMnMain *ui;
@@ -53,6 +55,7 @@ private:
     bool isGenLocalSafeByProgram;
     int nTotalBlock;
     int nCurrentBlock;
+    QList<QWidget *> frms;
 
 private slots:
     void initForm();
@@ -66,6 +69,7 @@ private slots:
     void ShowMasternodeStatus();
     void mnSetupComplete();
     void doSynOver();
+    void selectMasternodeList(QListWidgetItem *selectNode);
 
     void showProcessMessage(const QString &msg, E_MESSAGE_LEVEL ml=E_INFO);
     void showLocalSetting();

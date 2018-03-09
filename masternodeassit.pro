@@ -39,7 +39,8 @@ SOURCES += \
     localrpcdialog.cpp \
     cstartmasternode.cpp \
     database.cpp \
-    changedialog.cpp
+    changedialog.cpp \
+    form/MasternodePanel.cpp
 
 
 
@@ -62,11 +63,13 @@ HEADERS += \
     localrpcdialog.h \
     cstartmasternode.h \
     database.h \
-    changedialog.h
+    changedialog.h \
+    form/MasternodePanel.h
 
 FORMS += \
-        masternodeassit.ui \
-    uimnmain.ui
+    uimnmain.ui \
+    form/masternodepanel.ui \
+    form/cmdsend.ui
 
 
 LIBS += -lWs2_32
