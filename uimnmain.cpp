@@ -26,7 +26,7 @@ UIMnMain::UIMnMain(QWidget *parent):
     QDialog(parent),
     ui(new Ui::UIMnMain)
 {
-    CheckMasternodeFunctioning();
+    //CheckMasternodeFunctioning();
     ui->setupUi(this);
     this->initForm();
 

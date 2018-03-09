@@ -47,7 +47,6 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-
 #include <QtWidgets>
 #include <QVBoxLayout>
 #include <QDir>
@@ -327,7 +326,8 @@ void AddressPage::generateAddr()
     {
         QMessageBox::warning(this,tr("提示"),
                      tr("调用RPC获取地址失败，请检查SAFE钱包程序是否已经打开。"));
-        exit(1);
+        //exit(1);
+        return;
     }
 }
 
@@ -541,7 +541,8 @@ void MasternodeInfoPage::initializePage()
     {
         QMessageBox::warning(this,tr("提示"),
                      tr("请检查SAFE钱包程序是否已经打开。"));
-        exit(1);
+        //exit(1);
+        return;
 
     }
 
