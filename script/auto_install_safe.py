@@ -30,7 +30,7 @@ def main():
     url_base = 'http://www.anwang.com/download/'
     package_url = url_base + package_name
     ##step 1: download package
-    get_package_cmd = 'wget ' + package_url
+    get_package_cmd = 'wget -N ' + package_url
     ret = subprocess.call(get_package_cmd, shell=True)
     if ret == 0:
         ##step 2: parse package
@@ -64,7 +64,6 @@ def main():
         ret = subprocess.call(parse_dep, shell=True)
         if ret == 0:
             #maybe need root password
-            #cp_dep_to_gen_root = 'cp -rf ./safe_v1.0.1/deps/usr ./'
             cp_dep_to_gen_root = 'cp -rf ./safe_v1.0.1/deps/usr /'
             print cp_dep_to_gen_root
             ret = subprocess.call(cp_dep_to_gen_root, shell=True)
